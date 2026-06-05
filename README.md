@@ -50,4 +50,6 @@ pnpm scrape:business-france
 
 - [Architecture](docs/architecture.md)
 - [Cahier des charges](docs/cahier-des-charges.md)
+- [DESIGN.md](DESIGN.md) — design system (tokens, source canonique pour les agents)
+- [Direction artistique](docs/direction-artistique.md) — guide detaille (le pourquoi)
 
