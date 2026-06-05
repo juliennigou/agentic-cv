@@ -24,8 +24,8 @@ export default async function AccountPage() {
         </section>
 
         <div className="empty-state">
-          Ajoute `NEXT_PUBLIC_SUPABASE_URL` et `NEXT_PUBLIC_SUPABASE_ANON_KEY` dans
-          l'environnement de l'app web.
+          Ajoute `NEXT_PUBLIC_SUPABASE_URL` et `NEXT_PUBLIC_SUPABASE_ANON_KEY` dans l'environnement
+          de l'app web.
         </div>
       </main>
     );

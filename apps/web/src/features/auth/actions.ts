@@ -48,7 +48,9 @@ async function getAuthCallbackUrl(next = defaultRedirect) {
 }
 
 function readCredentials(formData: FormData): CredentialsResult {
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const email = String(formData.get("email") ?? "")
+    .trim()
+    .toLowerCase();
   const password = String(formData.get("password") ?? "");
 
   if (!email || !password) {
@@ -150,8 +152,7 @@ export async function signUpWithPassword(
 
   return {
     status: "success",
-    message:
-      "Compte créé. Supabase attend une confirmation email avant de créer la session."
+    message: "Compte créé. Supabase attend une confirmation email avant de créer la session."
   };
 }
 

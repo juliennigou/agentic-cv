@@ -52,8 +52,8 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
 
       {!isSupabaseConfigured() ? (
         <div className="empty-state">
-          Supabase Auth n'est pas encore configuré. Renseigne les variables d'environnement
-          avant d'activer la connexion.
+          Supabase Auth n'est pas encore configuré. Renseigne les variables d'environnement avant
+          d'activer la connexion.
         </div>
       ) : (
         <div className="auth-layout">

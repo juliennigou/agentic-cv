@@ -51,8 +51,8 @@ export function OfferSearch({ offers }: OfferSearchProps) {
 
       {offers.length === 0 ? (
         <div className="empty-state">
-          Aucune offre disponible pour le moment. Lance le scraper Business France
-          (<code>pnpm scrape:business-france</code>) pour alimenter la base.
+          Aucune offre disponible pour le moment. Lance le scraper Business France (
+          <code>pnpm scrape:business-france</code>) pour alimenter la base.
         </div>
       ) : (
         <div className="offer-list">

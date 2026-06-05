@@ -17,7 +17,8 @@ export default async function HomePage() {
         <h1>Les offres V.I.E, enfin claires et faciles à explorer.</h1>
         <p>
           Dis qui tu es et ce que tu cherches, puis parcours des offres normalisées, filtrables et
-          prêtes pour candidater. Plus de listes illisibles : juste les bonnes offres, au bon endroit.
+          prêtes pour candidater. Plus de listes illisibles : juste les bonnes offres, au bon
+          endroit.
         </p>
         <div className="cta-row">
           <a className="btn btn-primary" href="/offres">
@@ -32,12 +33,16 @@ export default async function HomePage() {
           <div className="step">
             <span className="step-num">01</span>
             <h3>Renseigne ton profil</h3>
-            <p>Rôles visés, pays, compétences. Quelques champs suffisent pour cadrer ta recherche.</p>
+            <p>
+              Rôles visés, pays, compétences. Quelques champs suffisent pour cadrer ta recherche.
+            </p>
           </div>
           <div className="step">
             <span className="step-num">02</span>
             <h3>Explore les offres</h3>
-            <p>Des offres V.I.E centralisées et normalisées, filtrables par pays, entreprise ou date.</p>
+            <p>
+              Des offres V.I.E centralisées et normalisées, filtrables par pays, entreprise ou date.
+            </p>
           </div>
           <div className="step">
             <span className="step-num">03</span>
