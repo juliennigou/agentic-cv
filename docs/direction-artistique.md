@@ -1,6 +1,6 @@
 # Direction artistique — Agentic CV
 
-> **Guide narratif détaillé (le *pourquoi*).** Toute décision visuelle doit pouvoir
+> **Guide narratif détaillé (le _pourquoi_).** Toute décision visuelle doit pouvoir
 > se justifier par ce document.
 >
 > Les **valeurs exactes des tokens** (la source canonique lisible par les agents)
@@ -46,28 +46,28 @@ Palette froide, contrastée, économe. Une seule couleur d'accent forte ; le res
 une échelle de gris neutres légèrement bleutés. Mode clair en premier, variables prêtes
 pour un futur mode sombre.
 
-| Rôle | Token | Clair | Usage |
-|------|-------|-------|-------|
-| Fond | `--bg` | `#F6F7F9` | Fond de page, neutre froid très clair |
-| Surface | `--surface` | `#FFFFFF` | Cartes, champs, panneaux |
-| Surface alt | `--surface-2` | `#F1F3F6` | Survol, zones secondaires, code |
-| Encre | `--ink` | `#0E1217` | Texte principal, titres |
-| Texte attenué | `--muted` | `#5B6573` | Méta, labels, texte secondaire |
-| Texte faible | `--faint` | `#8A93A1` | Placeholders, mentions |
-| Hairline | `--border` | `#E4E7EC` | Bordures 1 px, séparateurs |
-| Hairline fort | `--border-strong` | `#CBD1DA` | Bordures au survol / focus |
-| Accent | `--accent` | `#2347F0` | Liens, action primaire, focus (cobalt électrique) |
-| Accent survol | `--accent-hover` | `#1B38C7` | État pressé / survol |
-| Accent doux | `--accent-soft` | `#EAEEFE` | Fond de badge ou d'état sélectionné |
+| Rôle          | Token             | Clair     | Usage                                             |
+| ------------- | ----------------- | --------- | ------------------------------------------------- |
+| Fond          | `--bg`            | `#F6F7F9` | Fond de page, neutre froid très clair             |
+| Surface       | `--surface`       | `#FFFFFF` | Cartes, champs, panneaux                          |
+| Surface alt   | `--surface-2`     | `#F1F3F6` | Survol, zones secondaires, code                   |
+| Encre         | `--ink`           | `#0E1217` | Texte principal, titres                           |
+| Texte attenué | `--muted`         | `#5B6573` | Méta, labels, texte secondaire                    |
+| Texte faible  | `--faint`         | `#8A93A1` | Placeholders, mentions                            |
+| Hairline      | `--border`        | `#E4E7EC` | Bordures 1 px, séparateurs                        |
+| Hairline fort | `--border-strong` | `#CBD1DA` | Bordures au survol / focus                        |
+| Accent        | `--accent`        | `#2347F0` | Liens, action primaire, focus (cobalt électrique) |
+| Accent survol | `--accent-hover`  | `#1B38C7` | État pressé / survol                              |
+| Accent doux   | `--accent-soft`   | `#EAEEFE` | Fond de badge ou d'état sélectionné               |
 
 Couleurs de **statut** (suivi de candidature, états système) — usage strictement
 fonctionnel, jamais décoratif :
 
-| Rôle | Token | Clair |
-|------|-------|-------|
-| Succès | `--success` | `#0E8A5F` |
+| Rôle      | Token       | Clair     |
+| --------- | ----------- | --------- |
+| Succès    | `--success` | `#0E8A5F` |
 | Attention | `--warning` | `#B7791F` |
-| Erreur | `--danger` | `#C0341D` |
+| Erreur    | `--danger`  | `#C0341D` |
 
 Règles :
 
@@ -81,26 +81,26 @@ Règles :
 
 Trois voix, un seul système :
 
-| Usage | Famille | Token | Pourquoi |
-|-------|---------|-------|----------|
-| Titres / display | **Space Grotesk** | `--font-display` | Grotesque géométrique au caractère affirmé ; pose la signature sans nuire à la lisibilité |
-| Corps / UI | **IBM Plex Sans** | `--font-sans` | Neutre, très lisible en petit, conçue pour les interfaces denses |
-| Détails structurés | **IBM Plex Mono** | `--font-mono` | Labels, tags, dates, chiffres, IDs ; donne le ton « outil » |
+| Usage              | Famille           | Token            | Pourquoi                                                                                  |
+| ------------------ | ----------------- | ---------------- | ----------------------------------------------------------------------------------------- |
+| Titres / display   | **Space Grotesk** | `--font-display` | Grotesque géométrique au caractère affirmé ; pose la signature sans nuire à la lisibilité |
+| Corps / UI         | **IBM Plex Sans** | `--font-sans`    | Neutre, très lisible en petit, conçue pour les interfaces denses                          |
+| Détails structurés | **IBM Plex Mono** | `--font-mono`    | Labels, tags, dates, chiffres, IDs ; donne le ton « outil »                               |
 
 Plex Sans et Plex Mono sont de la même famille : le sans neutre et le mono se marient
 naturellement, pendant que Space Grotesk apporte le caractère sur les titres.
 
 **Échelle typographique** (base 16 px, ratio ~1.2–1.25) :
 
-| Token | Taille | Usage |
-|-------|--------|-------|
-| `--text-xs` | 12 px | Tags mono, mentions légales |
-| `--text-sm` | 14 px | Méta, labels, texte secondaire |
-| `--text-base` | 16 px | Corps de texte |
-| `--text-lg` | 18 px | Sous-titres, intro |
-| `--text-xl` | 21 px | Titre de carte offre |
-| `--text-2xl` | 28 px | Titres de section |
-| `--text-3xl` | clamp 34→52 px | Titre de page / hero |
+| Token         | Taille         | Usage                          |
+| ------------- | -------------- | ------------------------------ |
+| `--text-xs`   | 12 px          | Tags mono, mentions légales    |
+| `--text-sm`   | 14 px          | Méta, labels, texte secondaire |
+| `--text-base` | 16 px          | Corps de texte                 |
+| `--text-lg`   | 18 px          | Sous-titres, intro             |
+| `--text-xl`   | 21 px          | Titre de carte offre           |
+| `--text-2xl`  | 28 px          | Titres de section              |
+| `--text-3xl`  | clamp 34→52 px | Titre de page / hero           |
 
 Règles :
 
@@ -126,10 +126,10 @@ ces tokens, jamais une valeur arbitraire.
 
 **Rayons** — discrets, cohérents avec le ton « tech » (pas de grandes courbes) :
 
-| Token | Valeur | Usage |
-|-------|--------|-------|
-| `--radius-sm` | 4 px | Champs, boutons, tags |
-| `--radius-md` | 6 px | Cartes, panneaux |
+| Token           | Valeur | Usage                       |
+| --------------- | ------ | --------------------------- |
+| `--radius-sm`   | 4 px   | Champs, boutons, tags       |
+| `--radius-md`   | 6 px   | Cartes, panneaux            |
 | `--radius-full` | 999 px | Points de statut, pastilles |
 
 ## 6. Bordures, ombres, profondeur
@@ -168,7 +168,7 @@ ces tokens, jamais une valeur arbitraire.
 Champs hauts de 44 px, hairline, focus accent. Labels associés pour l'accessibilité.
 
 **État vide** (`.empty-state`) : bordure en pointillés, texte `--muted`, message qui
-explique *quoi faire* (pas juste « aucun résultat »).
+explique _quoi faire_ (pas juste « aucun résultat »).
 
 **Barre de navigation** (`.topbar`) : marque (`.brand`) à gauche en Space Grotesk,
 navigation discrète à droite en `--muted`. Minimal, sans fond ni ombre.
@@ -192,6 +192,6 @@ navigation discrète à droite en `--muted`. Minimal, sans fond ni ombre.
 
 ---
 
-*Mise en œuvre : voir les design tokens en tête de `apps/web/src/app/globals.css`.
+_Mise en œuvre : voir les design tokens en tête de `apps/web/src/app/globals.css`.
 Les polices sont chargées via `next/font` dans `apps/web/src/app/layout.tsx` et
-exposées en variables CSS (`--font-display`, `--font-sans`, `--font-mono`).*
+exposées en variables CSS (`--font-display`, `--font-sans`, `--font-mono`)._

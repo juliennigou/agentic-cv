@@ -6,7 +6,11 @@ import {
   releaseScrapeLock
 } from "@agentic-cv/db";
 import { BusinessFranceScraper } from "@agentic-cv/scraper-business-france";
-import { runJobScraper, type JobOfferRepository, type ScrapeRunResult } from "@agentic-cv/scraper-core";
+import {
+  runJobScraper,
+  type JobOfferRepository,
+  type ScrapeRunResult
+} from "@agentic-cv/scraper-core";
 
 export type BusinessFranceScrapeOptions = {
   dryRun?: boolean;
@@ -39,7 +43,10 @@ export async function runBusinessFranceScrape(options: BusinessFranceScrapeOptio
   });
 
   if (!lockAcquired) {
-    const skippedResult = createSkippedResult(scraper.source, "A scrape is already running for this source.");
+    const skippedResult = createSkippedResult(
+      scraper.source,
+      "A scrape is already running for this source."
+    );
     await completeScrapeRun(scrapeRunId, skippedResult);
     return skippedResult;
   }

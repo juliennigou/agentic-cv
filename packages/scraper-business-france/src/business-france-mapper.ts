@@ -5,7 +5,10 @@ import type { BusinessFranceApiOfferDetail } from "./business-france-types";
 export function mapBusinessFranceJob(rawOffer: RawJobOffer): NormalizedJobOffer {
   const rawJob = rawOffer.raw as BusinessFranceApiOfferDetail;
   const sourceId = getSourceId(rawJob);
-  const description = [rawJob.organizationPresentation, rawJob.missionDescription].filter(Boolean).join("\n\n").trim();
+  const description = [rawJob.organizationPresentation, rawJob.missionDescription]
+    .filter(Boolean)
+    .join("\n\n")
+    .trim();
 
   return {
     source: "business_france_vie",

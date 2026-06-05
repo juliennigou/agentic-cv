@@ -241,8 +241,8 @@ Discreet radii consistent with the tech tone — no large curves.
 - **button** — primary action on `accent` / `onAccent`, `buttonHover` on press.
 - **tag** — mono `tag` typography, `surfaceAlt` fill, hairline; short structured
   values, usually uppercased.
-- **emptyState** — dashed `borderStrong`, `muted` text; the message says *what to
-  do*, not just "no results".
+- **emptyState** — dashed `borderStrong`, `muted` text; the message says _what to
+  do_, not just "no results".
 - **topbar / brand / navLink** — minimal bar, no background or shadow; brand in
   Space Grotesk, nav links in muted mono.
 - **focusRing** — 2px `accent` outline with offset on every interactive element;

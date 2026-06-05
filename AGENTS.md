@@ -67,7 +67,7 @@ observées et à respecter :
   (ex. `"business_france_vie"`, `"partial_success"`), pas d'`enum` TS.
 - Fonctions pures et petites ; effets de bord (DB, réseau, fs) isolés dans des
   modules dédiés (repositories, scrapers).
-- **Commentaires** : rares, en français, sur le *pourquoi* pas le *quoi*. Pas de
+- **Commentaires** : rares, en français, sur le _pourquoi_ pas le _quoi_. Pas de
   commentaire qui paraphrase le code.
 
 ---
@@ -80,7 +80,8 @@ Toujours via **pnpm** (jamais npm/yarn). `pnpm@9.15.4`.
 pnpm install                  # corepack enable d'abord si besoin
 pnpm db:generate              # régénère le client Prisma (requis après edit du schema)
 pnpm typecheck                # OBLIGATOIRE avant de finir
-pnpm lint                     # lint (actuellement = typecheck par package)
+pnpm lint                     # ESLint (qualité/bugs) ; --fix dispo via lint:fix
+pnpm format                   # Prettier --write ; format:check pour vérifier (CI)
 pnpm build                    # build Turbo
 pnpm dev                      # dev (Next + worker)
 pnpm scrape:business-france   # lance le scraper

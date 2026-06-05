@@ -7,9 +7,9 @@ export default function AccountPage() {
         </a>
       </header>
       <section className="empty-state">
-        L'espace compte sera branche apres le socle scraping: Supabase Auth, profil candidat et documents.
+        L'espace compte sera branche apres le socle scraping: Supabase Auth, profil candidat et
+        documents.
       </section>
     </main>
   );
 }
-

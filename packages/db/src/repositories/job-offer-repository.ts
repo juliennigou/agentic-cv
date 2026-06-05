@@ -40,7 +40,11 @@ export class PrismaJobOfferRepository implements JobOfferRepository {
     return "updated";
   }
 
-  async markMissingOffersInactive(source: string, seenExternalIds: string[], observedAt: Date): Promise<number> {
+  async markMissingOffersInactive(
+    source: string,
+    seenExternalIds: string[],
+    observedAt: Date
+  ): Promise<number> {
     if (seenExternalIds.length === 0) {
       return 0;
     }

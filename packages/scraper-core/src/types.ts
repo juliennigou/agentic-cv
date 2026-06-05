@@ -57,6 +57,12 @@ export type ScraperExtractOptions = {
 };
 
 export type JobOfferRepository = {
-  upsertOffer(offer: NormalizedJobOffer & { contentHash: string }): Promise<"created" | "updated" | "unchanged">;
-  markMissingOffersInactive?(source: ScraperSource, seenExternalIds: string[], observedAt: Date): Promise<number>;
+  upsertOffer(
+    offer: NormalizedJobOffer & { contentHash: string }
+  ): Promise<"created" | "updated" | "unchanged">;
+  markMissingOffersInactive?(
+    source: ScraperSource,
+    seenExternalIds: string[],
+    observedAt: Date
+  ): Promise<number>;
 };

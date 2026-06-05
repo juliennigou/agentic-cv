@@ -101,7 +101,9 @@ export class BusinessFranceScraper implements JobScraper {
     offerId: number,
     rawSearchItem: BusinessFranceApiOfferSummary
   ): Promise<BusinessFranceApiOfferDetail> {
-    const detail = await this.fetchJson<BusinessFranceApiOfferDetail>(`/api/Offers/details/${offerId}`);
+    const detail = await this.fetchJson<BusinessFranceApiOfferDetail>(
+      `/api/Offers/details/${offerId}`
+    );
     return { ...detail, rawSearchItem };
   }
 

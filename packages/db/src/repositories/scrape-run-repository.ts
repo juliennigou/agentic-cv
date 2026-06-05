@@ -14,7 +14,10 @@ export async function createScrapeRun(source: string): Promise<string> {
   return scrapeRun.id;
 }
 
-export async function completeScrapeRun(scrapeRunId: string, result: ScrapeRunResult): Promise<void> {
+export async function completeScrapeRun(
+  scrapeRunId: string,
+  result: ScrapeRunResult
+): Promise<void> {
   await prisma.scrapeRun.update({
     where: { id: scrapeRunId },
     data: {
