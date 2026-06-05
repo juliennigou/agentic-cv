@@ -19,4 +19,3 @@ export function computeJobOfferContentHash(offer: NormalizedJobOffer): string {
 
   return createHash("sha256").update(JSON.stringify(stablePayload)).digest("hex");
 }
-

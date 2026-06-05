@@ -1,6 +1,11 @@
 import { computeJobOfferContentHash } from "../dedupe/content-hash";
 import { validateNormalizedJobOffer } from "../normalizers/validate-job-offer";
-import type { JobOfferRepository, JobScraper, ScrapeRunResult, ScraperExtractOptions } from "../types";
+import type {
+  JobOfferRepository,
+  JobScraper,
+  ScrapeRunResult,
+  ScraperExtractOptions
+} from "../types";
 
 export type RunJobScraperOptions = ScraperExtractOptions & {
   dryRun?: boolean;
@@ -59,7 +64,11 @@ export async function runJobScraper(
     result.status === "success" &&
     repository.markMissingOffersInactive
   ) {
-    result.deactivated = await repository.markMissingOffersInactive(scraper.source, [...seenExternalIds], observedAt);
+    result.deactivated = await repository.markMissingOffersInactive(
+      scraper.source,
+      [...seenExternalIds],
+      observedAt
+    );
   }
 
   return result;

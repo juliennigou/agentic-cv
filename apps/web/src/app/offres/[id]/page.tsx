@@ -18,4 +18,3 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
     </main>
   );
 }
-

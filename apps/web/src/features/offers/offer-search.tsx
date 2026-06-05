@@ -13,7 +13,11 @@ export function OfferSearch() {
   return (
     <section aria-label="Recherche d'offres">
       <form className="toolbar">
-        <input className="field" type="search" placeholder="Rechercher une offre, une entreprise, un pays" />
+        <input
+          className="field"
+          type="search"
+          placeholder="Rechercher une offre, une entreprise, un pays"
+        />
         <select className="field" defaultValue="">
           <option value="">Tous les pays</option>
         </select>
@@ -39,4 +43,3 @@ export function OfferSearch() {
     </section>
   );
 }
-

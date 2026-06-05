@@ -34,9 +34,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="fr" className={`${spaceGrotesk.variable} ${plexSans.variable} ${plexMono.variable}`}>
+    <html
+      lang="fr"
+      className={`${spaceGrotesk.variable} ${plexSans.variable} ${plexMono.variable}`}
+    >
       <body>{children}</body>
     </html>
   );
 }
-

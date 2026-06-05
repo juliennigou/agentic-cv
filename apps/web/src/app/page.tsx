@@ -53,8 +53,8 @@ export default async function HomePage() {
       <section className="hero">
         <h1>Offres V.I.E propres, filtrables et pretes pour candidater.</h1>
         <p>
-          Premier jalon: scraper Business France, normaliser les offres et construire une base fiable avant
-          d'ajouter les comptes, documents et generations IA.
+          Premier jalon: scraper Business France, normaliser les offres et construire une base
+          fiable avant d'ajouter les comptes, documents et generations IA.
         </p>
       </section>
 
