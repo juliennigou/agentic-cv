@@ -1,0 +1,23 @@
+{
+  "name": "@agentic-cv/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/cli/scrape-business-france.ts",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "scrape:business-france": "tsx src/cli/scrape-business-france.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@agentic-cv/db": "workspace:*",
+    "@agentic-cv/scraper-business-france": "workspace:*",
+    "@agentic-cv/scraper-core": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
+

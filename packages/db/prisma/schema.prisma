@@ -1,0 +1,152 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum ScrapeRunStatus {
+  running
+  success
+  partial_success
+  failed
+}
+
+enum UserDocumentType {
+  base_resume
+  tailored_resume
+  cover_letter
+  other
+}
+
+enum ApplicationStatus {
+  saved
+  to_apply
+  applied
+  interview
+  rejected
+  accepted
+}
+
+model UserProfile {
+  id              String   @id @default(uuid()) @db.Uuid
+  userId          String   @unique @map("user_id") @db.Uuid
+  firstName       String?  @map("first_name")
+  lastName        String?  @map("last_name")
+  phone           String?
+  location        String?
+  targetRoles     String[] @default([]) @map("target_roles")
+  targetCountries String[] @default([]) @map("target_countries")
+  skills          String[] @default([])
+  languages       String[] @default([])
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  documents    UserDocument[]
+  savedJobs    SavedJob[]
+  applications Application[]
+
+  @@map("user_profiles")
+}
+
+model UserDocument {
+  id          String           @id @default(uuid()) @db.Uuid
+  userId      String           @map("user_id") @db.Uuid
+  type        UserDocumentType
+  fileName    String           @map("file_name")
+  storagePath String           @map("storage_path")
+  mimeType    String           @map("mime_type")
+  sizeBytes   Int              @map("size_bytes")
+  checksum    String?
+  createdAt   DateTime         @default(now()) @map("created_at")
+
+  user UserProfile @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("user_documents")
+}
+
+model JobOffer {
+  id             String   @id @default(uuid()) @db.Uuid
+  source         String
+  externalId     String?  @map("external_id")
+  sourceUrl      String   @map("source_url")
+  title          String
+  companyName    String?  @map("company_name")
+  country        String?
+  city           String?
+  contractType   String?  @map("contract_type")
+  durationMonths Int?     @map("duration_months")
+  salary         String?
+  description    String
+  requirements   String?
+  publishedAt    DateTime? @map("published_at")
+  expiresAt      DateTime? @map("expires_at")
+  scrapedAt      DateTime  @map("scraped_at")
+  contentHash    String    @map("content_hash")
+  rawData        Json      @map("raw_data")
+  isActive       Boolean   @default(true) @map("is_active")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  savedJobs    SavedJob[]
+  applications Application[]
+
+  @@unique([source, externalId])
+  @@unique([source, sourceUrl])
+  @@index([source, isActive])
+  @@index([country])
+  @@index([publishedAt])
+  @@map("job_offers")
+}
+
+model ScrapeRun {
+  id            String          @id @default(uuid()) @db.Uuid
+  source        String
+  status        ScrapeRunStatus
+  startedAt     DateTime        @default(now()) @map("started_at")
+  finishedAt    DateTime?       @map("finished_at")
+  offersFound   Int             @default(0) @map("offers_found")
+  offersCreated Int             @default(0) @map("offers_created")
+  offersUpdated Int             @default(0) @map("offers_updated")
+  offersUnchanged Int           @default(0) @map("offers_unchanged")
+  offersFailed  Int             @default(0) @map("offers_failed")
+  errorMessage  String?         @map("error_message")
+
+  @@index([source, startedAt])
+  @@map("scrape_runs")
+}
+
+model SavedJob {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  jobOfferId String   @map("job_offer_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user     UserProfile @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  jobOffer JobOffer    @relation(fields: [jobOfferId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jobOfferId])
+  @@map("saved_jobs")
+}
+
+model Application {
+  id         String            @id @default(uuid()) @db.Uuid
+  userId     String            @map("user_id") @db.Uuid
+  jobOfferId String            @map("job_offer_id") @db.Uuid
+  status     ApplicationStatus @default(saved)
+  notes      String?
+  appliedAt  DateTime?         @map("applied_at")
+  createdAt  DateTime          @default(now()) @map("created_at")
+  updatedAt  DateTime          @updatedAt @map("updated_at")
+
+  user     UserProfile @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  jobOffer JobOffer    @relation(fields: [jobOfferId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jobOfferId])
+  @@map("applications")
+}
+
