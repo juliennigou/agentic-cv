@@ -138,6 +138,15 @@ textarea {
   color: inherit;
 }
 
+code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.1em 0.4em;
+}
+
 /* Focus visible cohérent sur tout élément interactif */
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
   outline: 2px solid var(--accent);
@@ -197,6 +206,10 @@ textarea {
   text-decoration: none;
 }
 
+.nav a[aria-current="page"] {
+  color: var(--ink);
+}
+
 /* =============================================================================
    Hero
    ============================================================================= */
@@ -217,6 +230,120 @@ textarea {
   max-width: 64ch;
   color: var(--muted);
   font-size: var(--text-lg);
+}
+
+/* Eyebrow — petit label mono au-dessus d'un titre */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.eyebrow::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+}
+
+/* =============================================================================
+   Boutons
+   ============================================================================= */
+
+.cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: 0 var(--space-5);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  letter-spacing: var(--tracking-mono);
+  cursor: pointer;
+  transition:
+    background var(--motion-fast) var(--ease),
+    border-color var(--motion-fast) var(--ease),
+    color var(--motion-fast) var(--ease);
+}
+
+.btn:hover {
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover);
+}
+
+.btn-ghost {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--border);
+}
+
+.btn-ghost:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+}
+
+/* =============================================================================
+   Steps — "comment ça marche" en numéros mono
+   ============================================================================= */
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--border);
+}
+
+.step {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+}
+
+.step-num {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--accent);
+  letter-spacing: var(--tracking-mono);
+}
+
+.step h3 {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.step p {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
 }
 
 /* =============================================================================
@@ -257,6 +384,35 @@ textarea {
 }
 
 /* =============================================================================
+   En-tête de section + compteur
+   ============================================================================= */
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin: var(--space-7) 0 var(--space-4);
+}
+
+.section-head h2 {
+  font-size: var(--text-2xl);
+}
+
+.count {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-mono);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.count strong {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+/* =============================================================================
    Liste & carte offre — l'atome central du produit
    ============================================================================= */
 
@@ -265,13 +421,15 @@ textarea {
   gap: var(--space-3);
 }
 
+/* La carte entière est un lien cliquable */
 .offer-card {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-4);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: var(--surface);
   padding: var(--space-5);
+  color: var(--ink);
   transition:
     border-color var(--motion-fast) var(--ease),
     background var(--motion-fast) var(--ease);
@@ -280,11 +438,54 @@ textarea {
 .offer-card:hover {
   border-color: var(--border-strong);
   background: var(--surface);
+  text-decoration: none;
 }
 
-.offer-card h2 {
+.offer-card:hover .offer-arrow {
+  color: var(--accent);
+  transform: translateX(2px);
+}
+
+.offer-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.offer-card h2,
+.offer-card .offer-title {
+  font-family: var(--font-display);
   font-size: var(--text-xl);
   font-weight: 600;
+  line-height: var(--leading-snug);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.offer-company {
+  margin-top: var(--space-1);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-mono);
+  color: var(--muted);
+}
+
+.offer-arrow {
+  flex-shrink: 0;
+  color: var(--faint);
+  font-family: var(--font-mono);
+  transition:
+    color var(--motion-fast) var(--ease),
+    transform var(--motion-fast) var(--ease);
+}
+
+.offer-excerpt {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+  max-width: 72ch;
 }
 
 .offer-meta {
@@ -295,6 +496,29 @@ textarea {
   font-size: var(--text-sm);
   letter-spacing: var(--tracking-mono);
   color: var(--muted);
+}
+
+/* Rangée de tags */
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* Pied de carte: tags à gauche, date à droite */
+.offer-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.offer-date {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-mono);
+  color: var(--faint);
 }
 
 /* Tag mono réutilisable (pays, contrat, durée…) */
@@ -313,6 +537,106 @@ textarea {
   padding: var(--space-1) var(--space-2);
 }
 
+.tag-accent {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: transparent;
+}
+
+/* =============================================================================
+   Page détail offre
+   ============================================================================= */
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-mono);
+  color: var(--muted);
+}
+
+.back-link:hover {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.detail-header {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-5) 0 var(--space-7);
+  border-bottom: 1px solid var(--border);
+}
+
+.detail-header h1 {
+  font-size: var(--text-2xl);
+  max-width: 24ch;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: var(--space-8);
+  padding-top: var(--space-7);
+  align-items: start;
+}
+
+/* Corps de l'annonce */
+.prose {
+  display: grid;
+  gap: var(--space-5);
+  max-width: 68ch;
+}
+
+.prose h2 {
+  font-size: var(--text-lg);
+  font-family: var(--font-display);
+}
+
+.prose p {
+  color: var(--ink);
+  line-height: var(--leading-normal);
+}
+
+/* Aside: faits clés + CTA, collant au scroll */
+.detail-aside {
+  position: sticky;
+  top: var(--space-5);
+  display: grid;
+  gap: var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  padding: var(--space-5);
+}
+
+/* Liste de définitions en mono */
+.facts {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+}
+
+.facts > div {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.facts dt {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.facts dd {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--ink);
+}
+
 /* =============================================================================
    État vide
    ============================================================================= */
@@ -323,6 +647,7 @@ textarea {
   padding: var(--space-6);
   background: var(--surface);
   color: var(--muted);
+  line-height: var(--leading-normal);
 }
 
 /* =============================================================================
@@ -360,5 +685,19 @@ textarea {
 
   .hero h1 {
     max-width: none;
+  }
+
+  .steps {
+    grid-template-columns: 1fr;
+    gap: var(--space-5);
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+
+  .detail-aside {
+    position: static;
   }
 }
