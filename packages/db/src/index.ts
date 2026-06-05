@@ -13,6 +13,13 @@ export {
   type JobOfferListItem
 } from "./repositories/job-offer-read";
 export {
+  getOrCreateUserProfile,
+  updateUserProfile,
+  type UserProfileDetail,
+  type UserProfileInput,
+  type UserProfileUpdateInput
+} from "./repositories/user-profile-repository";
+export {
   acquireScrapeLock,
   completeScrapeRun,
   createScrapeRun,
