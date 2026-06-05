@@ -46,10 +46,12 @@ Le premier jalon est le scraper Business France et la pipeline ETL:
 pnpm scrape:business-france
 ```
 
+Pour lancer le scraper une fois par jour sur un VPS, voir la documentation systemd.
+
 ## Documentation
 
 - [Architecture](docs/architecture.md)
 - [Cahier des charges](docs/cahier-des-charges.md)
+- [Deploiement systemd](docs/deployment-systemd.md)
 - [DESIGN.md](DESIGN.md) — design system (tokens, source canonique pour les agents)
 - [Direction artistique](docs/direction-artistique.md) — guide detaille (le pourquoi)
-

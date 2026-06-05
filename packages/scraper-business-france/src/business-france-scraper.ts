@@ -1,104 +1,166 @@
-import { chromium } from "playwright";
 import type { JobScraper, RawJobOffer, ScraperExtractOptions } from "@agentic-cv/scraper-core";
 
 import { mapBusinessFranceJob } from "./business-france-mapper";
-import type { BusinessFranceRawJob } from "./business-france-types";
+import type {
+  BusinessFranceApiOfferDetail,
+  BusinessFranceApiOfferSummary,
+  BusinessFranceSearchPayload,
+  BusinessFranceSearchResponse
+} from "./business-france-types";
 
-const DEFAULT_START_URL = "https://mon-vie-via.businessfrance.fr/offres/recherche";
+const DEFAULT_API_BASE_URL = "https://civiweb-api-prd.azurewebsites.net";
+const DEFAULT_PUBLIC_BASE_URL = "https://mon-vie-via.businessfrance.fr/en/offres";
+const DEFAULT_LIMIT = 50;
+const DEFAULT_DELAY_MS = 250;
+const DEFAULT_TIMEOUT_MS = 30_000;
+
+export type BusinessFranceScraperConfig = {
+  apiBaseUrl?: string;
+  publicBaseUrl?: string;
+  pageSize?: number;
+  timeoutMs?: number;
+};
 
 export class BusinessFranceScraper implements JobScraper {
-  readonly source = "business_france" as const;
+  readonly source = "business_france_vie" as const;
 
-  constructor(private readonly startUrl = DEFAULT_START_URL) {}
+  private readonly apiBaseUrl: string;
+  private readonly publicBaseUrl: string;
+  private readonly pageSize: number;
+  private readonly timeoutMs: number;
+
+  constructor(config: BusinessFranceScraperConfig = {}) {
+    this.apiBaseUrl = trimTrailingSlash(config.apiBaseUrl ?? DEFAULT_API_BASE_URL);
+    this.publicBaseUrl = trimTrailingSlash(config.publicBaseUrl ?? DEFAULT_PUBLIC_BASE_URL);
+    this.pageSize = config.pageSize ?? DEFAULT_LIMIT;
+    this.timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  }
 
   async extract(options: ScraperExtractOptions = {}): Promise<RawJobOffer[]> {
-    const maxPages = options.maxPages ?? 1;
-    const delayMs = options.delayMs ?? 750;
-    const browser = await chromium.launch({ headless: true });
+    const maxPages = options.maxPages ?? Number.POSITIVE_INFINITY;
+    const maxOffers = options.maxOffers ?? Number.POSITIVE_INFINITY;
+    const delayMs = options.delayMs ?? DEFAULT_DELAY_MS;
+    const scrapedAt = new Date();
+    const rawOffers: RawJobOffer[] = [];
 
-    try {
-      const page = await browser.newPage();
-      await page.goto(this.startUrl, { waitUntil: "domcontentloaded" });
-      await page.waitForTimeout(delayMs);
+    let skip = 0;
+    let total: number | undefined;
 
-      const offers: RawJobOffer[] = [];
+    for (let pageIndex = 0; pageIndex < maxPages && rawOffers.length < maxOffers; pageIndex += 1) {
+      const searchPage = await this.searchOffers(this.pageSize, skip);
+      const items = searchPage.result ?? [];
+      total = searchPage.count ?? total;
 
-      for (let pageIndex = 0; pageIndex < maxPages; pageIndex += 1) {
-        const pageOffers = await this.extractCurrentPageOffers(page);
-        offers.push(...pageOffers);
+      if (items.length === 0) {
+        break;
+      }
 
-        const hasNextPage = await this.goToNextPage(page);
-        if (!hasNextPage) {
+      for (const item of items) {
+        if (rawOffers.length >= maxOffers) {
           break;
         }
 
-        await page.waitForTimeout(delayMs);
+        const offerId = item.id;
+        if (!offerId) {
+          continue;
+        }
+
+        const detail = await this.getOfferDetail(offerId, item);
+        rawOffers.push({
+          source: this.source,
+          sourceUrl: this.buildSourceUrl(offerId),
+          externalId: String(offerId),
+          raw: detail,
+          scrapedAt
+        });
+
+        await sleep(delayMs);
       }
 
-      return offers;
-    } finally {
-      await browser.close();
+      skip += items.length;
+      if (total !== undefined && skip >= total) {
+        break;
+      }
     }
+
+    return rawOffers;
   }
 
   async normalize(raw: RawJobOffer) {
     return mapBusinessFranceJob(raw);
   }
 
-  private async extractCurrentPageOffers(page: import("playwright").Page): Promise<RawJobOffer[]> {
-    const scrapedAt = new Date();
+  private async searchOffers(limit: number, skip: number): Promise<BusinessFranceSearchResponse> {
+    return this.fetchJson<BusinessFranceSearchResponse>("/api/Offers/search", {
+      method: "POST",
+      body: JSON.stringify(buildSearchPayload(limit, skip))
+    });
+  }
 
-    // Selectors are intentionally isolated here because Business France may change its HTML.
-    // The first implementation should update these selectors after inspecting the live page.
-    const rawJobs = await page.evaluate<BusinessFranceRawJob[]>(() => {
-      const cards = Array.from(document.querySelectorAll("[data-testid='job-card'], article, .job-card"));
-      const jobs: BusinessFranceRawJob[] = [];
+  private async getOfferDetail(
+    offerId: number,
+    rawSearchItem: BusinessFranceApiOfferSummary
+  ): Promise<BusinessFranceApiOfferDetail> {
+    const detail = await this.fetchJson<BusinessFranceApiOfferDetail>(`/api/Offers/details/${offerId}`);
+    return { ...detail, rawSearchItem };
+  }
 
-      for (const card of cards) {
-        const link = card.querySelector<HTMLAnchorElement>("a[href]");
-        const title = card.querySelector<HTMLElement>("h2, h3, [data-testid='job-title']")?.innerText.trim();
-        const sourceUrl = link?.href;
+  private async fetchJson<T>(path: string, init: RequestInit = {}): Promise<T> {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
 
-        if (!title || !sourceUrl) {
-          continue;
-        }
+    try {
+      const response = await fetch(`${this.apiBaseUrl}${path}`, {
+        ...init,
+        headers: {
+          accept: "application/json",
+          "content-type": "application/json",
+          ...init.headers
+        },
+        signal: controller.signal
+      });
 
-        jobs.push({
-          title,
-          sourceUrl,
-          externalId: sourceUrl.split("/").filter(Boolean).at(-1),
-          companyName: card.querySelector<HTMLElement>("[data-testid='company'], .company")?.innerText.trim(),
-          country: card.querySelector<HTMLElement>("[data-testid='country'], .country")?.innerText.trim(),
-          city: card.querySelector<HTMLElement>("[data-testid='city'], .city")?.innerText.trim(),
-          description: card.textContent?.trim() ?? title
-        });
+      if (!response.ok) {
+        throw new Error(`Business France API ${response.status} ${response.statusText} on ${path}`);
       }
 
-      return jobs;
-    });
-
-    return rawJobs.map((rawJob) => ({
-      source: "business_france",
-      sourceUrl: rawJob.sourceUrl,
-      externalId: rawJob.externalId,
-      raw: rawJob,
-      scrapedAt
-    }));
-  }
-
-  private async goToNextPage(page: import("playwright").Page): Promise<boolean> {
-    const nextLink = page.locator("a[rel='next'], button[aria-label*='Suivant'], button:has-text('Suivant')").first();
-    const count = await nextLink.count();
-
-    if (count === 0 || !(await nextLink.isEnabled())) {
-      return false;
+      return (await response.json()) as T;
+    } finally {
+      clearTimeout(timeout);
     }
-
-    await Promise.all([
-      page.waitForLoadState("domcontentloaded").catch(() => undefined),
-      nextLink.click()
-    ]);
-
-    return true;
   }
+
+  private buildSourceUrl(offerId: number): string {
+    return `${this.publicBaseUrl}/${offerId}`;
+  }
+}
+
+function buildSearchPayload(limit: number, skip: number): BusinessFranceSearchPayload {
+  return {
+    limit,
+    skip,
+    activitySectorId: [],
+    missionsTypesIds: [],
+    missionsDurations: [],
+    geographicZones: [],
+    countriesIds: [],
+    studiesLevelId: [],
+    companiesSizes: [],
+    specializationsIds: [],
+    entreprisesIds: [0],
+    missionStartDate: null,
+    query: null
+  };
+}
+
+function trimTrailingSlash(value: string): string {
+  return value.replace(/\/+$/, "");
+}
+
+function sleep(ms: number): Promise<void> {
+  if (ms <= 0) {
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }

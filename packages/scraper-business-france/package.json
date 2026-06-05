@@ -12,11 +12,9 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@agentic-cv/scraper-core": "workspace:*",
-    "playwright": "^1.49.1"
+    "@agentic-cv/scraper-core": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.2"
   }
 }
-

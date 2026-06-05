@@ -21,6 +21,14 @@ export class PrismaJobOfferRepository implements JobOfferRepository {
     }
 
     if (existingOffer.contentHash === offer.contentHash) {
+      await prisma.jobOffer.update({
+        where: { id: existingOffer.id },
+        data: {
+          scrapedAt: offer.scrapedAt,
+          lastSeenAt: offer.scrapedAt,
+          isActive: true
+        }
+      });
       return "unchanged";
     }
 
@@ -30,6 +38,30 @@ export class PrismaJobOfferRepository implements JobOfferRepository {
     });
 
     return "updated";
+  }
+
+  async markMissingOffersInactive(source: string, seenExternalIds: string[], observedAt: Date): Promise<number> {
+    if (seenExternalIds.length === 0) {
+      return 0;
+    }
+
+    const result = await prisma.jobOffer.updateMany({
+      where: {
+        source,
+        externalId: {
+          notIn: seenExternalIds
+        },
+        lastSeenAt: {
+          lt: observedAt
+        },
+        isActive: true
+      },
+      data: {
+        isActive: false
+      }
+    });
+
+    return result.count;
   }
 }
 
@@ -50,6 +82,8 @@ function toJobOfferCreateInput(offer: UpsertableJobOffer): Prisma.JobOfferCreate
     publishedAt: offer.publishedAt,
     expiresAt: offer.expiresAt,
     scrapedAt: offer.scrapedAt,
+    firstSeenAt: offer.scrapedAt,
+    lastSeenAt: offer.scrapedAt,
     contentHash: offer.contentHash,
     rawData: offer.rawData as Prisma.InputJsonValue,
     isActive: true
@@ -70,9 +104,9 @@ function toJobOfferUpdateInput(offer: UpsertableJobOffer): Prisma.JobOfferUpdate
     publishedAt: offer.publishedAt,
     expiresAt: offer.expiresAt,
     scrapedAt: offer.scrapedAt,
+    lastSeenAt: offer.scrapedAt,
     contentHash: offer.contentHash,
     rawData: offer.rawData as Prisma.InputJsonValue,
     isActive: true
   };
 }
-

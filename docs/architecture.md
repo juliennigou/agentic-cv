@@ -180,7 +180,7 @@ extract -> parse -> normalize -> validate -> dedupe -> persist
 Contrat simplifie:
 
 ```ts
-export type ScraperSource = "business_france";
+export type ScraperSource = "business_france_vie";
 
 export type RawJobOffer = {
   source: ScraperSource;

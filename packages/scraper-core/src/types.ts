@@ -1,6 +1,6 @@
-export type ScraperSource = "business_france";
+export type ScraperSource = "business_france_vie";
 
-export type ScrapeRunStatus = "running" | "success" | "partial_success" | "failed";
+export type ScrapeRunStatus = "running" | "skipped" | "success" | "partial_success" | "failed";
 
 export type RawJobOffer = {
   source: ScraperSource;
@@ -34,6 +34,7 @@ export type PersistedOfferCounts = {
   created: number;
   updated: number;
   unchanged: number;
+  deactivated: number;
   failed: number;
 };
 
@@ -51,10 +52,11 @@ export interface JobScraper {
 
 export type ScraperExtractOptions = {
   maxPages?: number;
+  maxOffers?: number;
   delayMs?: number;
 };
 
 export type JobOfferRepository = {
   upsertOffer(offer: NormalizedJobOffer & { contentHash: string }): Promise<"created" | "updated" | "unchanged">;
+  markMissingOffersInactive?(source: ScraperSource, seenExternalIds: string[], observedAt: Date): Promise<number>;
 };
-
