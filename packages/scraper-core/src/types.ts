@@ -22,6 +22,7 @@ export type NormalizedJobOffer = {
   durationMonths?: number;
   salary?: string;
   description: string;
+  companyDescription?: string;
   requirements?: string;
   publishedAt?: Date;
   expiresAt?: Date;

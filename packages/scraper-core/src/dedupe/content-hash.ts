@@ -12,6 +12,7 @@ export function computeJobOfferContentHash(offer: NormalizedJobOffer): string {
     durationMonths: offer.durationMonths,
     salary: offer.salary,
     description: offer.description,
+    companyDescription: offer.companyDescription,
     requirements: offer.requirements,
     publishedAt: offer.publishedAt?.toISOString(),
     expiresAt: offer.expiresAt?.toISOString()

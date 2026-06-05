@@ -5,10 +5,10 @@ import type { BusinessFranceApiOfferDetail } from "./business-france-types";
 export function mapBusinessFranceJob(rawOffer: RawJobOffer): NormalizedJobOffer {
   const rawJob = rawOffer.raw as BusinessFranceApiOfferDetail;
   const sourceId = getSourceId(rawJob);
-  const description = [rawJob.organizationPresentation, rawJob.missionDescription]
-    .filter(Boolean)
-    .join("\n\n")
-    .trim();
+  // Mission et présentation entreprise séparées : la mission alimente l'embedding,
+  // la présentation reste disponible pour l'UI mais hors du vecteur.
+  const missionDescription = rawJob.missionDescription?.trim();
+  const companyDescription = rawJob.organizationPresentation?.trim() || undefined;
 
   return {
     source: "business_france_vie",
@@ -21,7 +21,8 @@ export function mapBusinessFranceJob(rawOffer: RawJobOffer): NormalizedJobOffer 
     contractType: rawJob.missionType?.trim() ?? rawJob.missionTypeEn?.trim(),
     durationMonths: rawJob.missionDuration,
     salary: formatAllowance(rawJob.indemnite),
-    description: description || rawJob.missionTitle?.trim() || "Description non disponible.",
+    description: missionDescription || rawJob.missionTitle?.trim() || "Description non disponible.",
+    companyDescription,
     requirements: rawJob.missionProfile?.trim(),
     publishedAt: parseOptionalDate(rawJob.startBroadcastDate ?? rawJob.creationDate),
     expiresAt: parseOptionalDate(rawJob.endBroadcastDate),
