@@ -13,7 +13,8 @@
     "typecheck": "turbo typecheck",
     "db:generate": "pnpm --filter @agentic-cv/db db:generate",
     "db:migrate": "pnpm --filter @agentic-cv/db db:migrate",
-    "scrape:business-france": "pnpm --filter @agentic-cv/worker scrape:business-france"
+    "scrape:business-france": "pnpm --filter @agentic-cv/worker scrape:business-france",
+    "embed:job-offers": "pnpm --filter @agentic-cv/worker embed:job-offers"
   },
   "devDependencies": {
     "@eslint/js": "^9",

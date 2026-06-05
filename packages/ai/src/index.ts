@@ -1,3 +1,6 @@
-export type AiModuleStatus = "planned";
-
-export const aiModuleStatus: AiModuleStatus = "planned";
+export {
+  EMBEDDING_DIMENSION,
+  embedTexts,
+  isEmbeddingConfigured,
+  type EmbeddingTaskType
+} from "./embeddings/gemini";

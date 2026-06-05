@@ -1,6 +1,7 @@
 services:
   postgres:
-    image: postgres:16-alpine
+    # Image PostgreSQL 16 avec l'extension pgvector intégrée (embeddings sémantiques).
+    image: pgvector/pgvector:pg16
     container_name: agentic-cv-postgres
     environment:
       POSTGRES_DB: agentic_cv

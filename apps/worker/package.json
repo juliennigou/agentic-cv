@@ -8,9 +8,11 @@
     "dev": "tsx src/cli/scrape-business-france.ts",
     "lint": "tsc -p tsconfig.json --noEmit",
     "scrape:business-france": "tsx src/cli/scrape-business-france.ts",
+    "embed:job-offers": "tsx src/cli/embed-job-offers.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@agentic-cv/ai": "workspace:*",
     "@agentic-cv/db": "workspace:*",
     "@agentic-cv/scraper-business-france": "workspace:*",
     "@agentic-cv/scraper-core": "workspace:*"

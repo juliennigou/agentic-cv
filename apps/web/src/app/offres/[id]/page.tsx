@@ -52,6 +52,12 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
               <p>{offer.requirements}</p>
             </section>
           ) : null}
+          {offer.companyDescription ? (
+            <section>
+              <h2>À propos de l'entreprise</h2>
+              <p>{offer.companyDescription}</p>
+            </section>
+          ) : null}
         </article>
 
         <aside className="detail-aside">
