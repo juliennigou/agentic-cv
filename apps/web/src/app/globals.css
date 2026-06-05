@@ -210,6 +210,25 @@ code {
   color: var(--ink);
 }
 
+.nav form {
+  display: inline-flex;
+}
+
+.nav-button {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-mono);
+}
+
+.nav-button:hover {
+  color: var(--ink);
+}
+
 /* =============================================================================
    Hero
    ============================================================================= */
@@ -286,6 +305,11 @@ code {
   text-decoration: none;
 }
 
+.btn:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
 .btn-primary {
   background: var(--accent);
   color: var(--on-accent);
@@ -304,6 +328,11 @@ code {
 .btn-ghost:hover {
   border-color: var(--border-strong);
   background: var(--surface-2);
+}
+
+.btn-full {
+  justify-content: center;
+  width: 100%;
 }
 
 /* =============================================================================
@@ -381,6 +410,138 @@ code {
   outline: 2px solid var(--accent);
   outline-offset: 0;
   border-color: var(--accent);
+}
+
+.textarea-field {
+  min-height: 132px;
+  padding-top: var(--space-3);
+  padding-bottom: var(--space-3);
+  resize: vertical;
+}
+
+/* =============================================================================
+   Compte & formulaires
+   ============================================================================= */
+
+.account-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  gap: var(--space-5);
+  align-items: start;
+  margin-top: var(--space-6);
+}
+
+.auth-layout {
+  display: grid;
+  margin-top: var(--space-6);
+}
+
+.account-section {
+  display: grid;
+  gap: var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  padding: var(--space-5);
+}
+
+.auth-card {
+  width: min(100%, 460px);
+}
+
+.account-section-wide {
+  min-width: 0;
+}
+
+.account-section h2 {
+  font-size: var(--text-xl);
+}
+
+.section-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.form-panel {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.form-grid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.form-grid.two-columns {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.form-field {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.form-field span {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-mono);
+  color: var(--muted);
+}
+
+.form-error,
+.form-success,
+.muted-text {
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+}
+
+.form-error {
+  color: var(--danger);
+}
+
+.form-success {
+  color: var(--success);
+}
+
+.muted-text {
+  color: var(--muted);
+}
+
+.auth-switch {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+}
+
+.oauth-panel {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.button-stack {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-mono);
+  text-transform: uppercase;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
 }
 
 /* =============================================================================
@@ -695,6 +856,15 @@ code {
   .detail-grid {
     grid-template-columns: 1fr;
     gap: var(--space-6);
+  }
+
+  .account-grid,
+  .form-grid.two-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .section-title-row {
+    display: grid;
   }
 
   .detail-aside {
