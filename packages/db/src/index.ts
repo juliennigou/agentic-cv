@@ -1,11 +1,15 @@
 export { prisma } from "./client";
 export { PrismaJobOfferRepository } from "./repositories/job-offer-repository";
 export {
-  countOffersNeedingEmbedding,
   listOffersNeedingEmbedding,
   setOfferEmbedding,
   type OfferNeedingEmbedding
 } from "./repositories/job-offer-embedding-repository";
+export {
+  listOffersNeedingStructuring,
+  setOfferStructured,
+  type OfferNeedingStructuring
+} from "./repositories/job-offer-structuring-repository";
 export {
   getJobOfferById,
   listActiveJobOffers,

@@ -34,18 +34,6 @@ export async function listOffersNeedingEmbedding(limit: number): Promise<OfferNe
   `;
 }
 
-/** Nombre d'offres actives restant à embedder (pour le reporting). */
-export async function countOffersNeedingEmbedding(): Promise<number> {
-  const rows = await prisma.$queryRaw<{ count: bigint }[]>`
-    SELECT COUNT(*) AS count
-    FROM job_offers
-    WHERE embedding IS NULL
-      AND is_active = true
-  `;
-
-  return Number(rows[0]?.count ?? 0);
-}
-
 /** Écrit l'embedding d'une offre. */
 export async function setOfferEmbedding(id: string, embedding: number[]): Promise<void> {
   const vectorLiteral = `[${embedding.join(",")}]`;

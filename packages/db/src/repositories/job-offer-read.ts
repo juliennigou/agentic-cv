@@ -20,6 +20,7 @@ const detailSelect = {
   source: true,
   salary: true,
   companyDescription: true,
+  companyDescriptionGenerated: true,
   requirements: true,
   scrapedAt: true
 } as const;
