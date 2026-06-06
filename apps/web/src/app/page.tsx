@@ -1,12 +1,17 @@
-import { listActiveJobOffers } from "@agentic-cv/db";
+import { listActiveJobOffers, listActiveOfferCountries } from "@agentic-cv/db";
+import { listRegions } from "@agentic-cv/shared";
 
 import { SiteHeader } from "@/components/site-header";
 import { OfferSearch } from "@/features/offers/offer-search";
+import { parseSearchCriteria } from "@/features/offers/search";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const offers = await listActiveJobOffers(12);
+  const [offers, countries] = await Promise.all([
+    listActiveJobOffers(12),
+    listActiveOfferCountries()
+  ]);
 
   return (
     <main className="page-shell">
@@ -52,7 +57,12 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <OfferSearch offers={offers} />
+      <OfferSearch
+        offers={offers}
+        criteria={parseSearchCriteria({})}
+        regions={listRegions()}
+        countries={countries}
+      />
     </main>
   );
 }

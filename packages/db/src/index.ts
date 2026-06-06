@@ -11,6 +11,13 @@ export {
   type OfferNeedingStructuring
 } from "./repositories/job-offer-structuring-repository";
 export {
+  searchJobOffers,
+  listActiveOfferCountries,
+  type SearchJobOffersParams,
+  type JobOfferSearchResult,
+  type OfferCountry
+} from "./repositories/job-offer-search-repository";
+export {
   getJobOfferById,
   listActiveJobOffers,
   type JobOfferDetail,

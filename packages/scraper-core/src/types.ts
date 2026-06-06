@@ -17,6 +17,7 @@ export type NormalizedJobOffer = {
   title: string;
   companyName?: string;
   country?: string;
+  countryCode?: string;
   city?: string;
   contractType?: string;
   durationMonths?: number;

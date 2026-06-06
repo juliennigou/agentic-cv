@@ -17,6 +17,7 @@ export function mapBusinessFranceJob(rawOffer: RawJobOffer): NormalizedJobOffer 
     title: rawJob.missionTitle?.trim() ?? `Offre VIE ${sourceId ?? "Business France"}`,
     companyName: rawJob.organizationName?.trim(),
     country: rawJob.countryName?.trim(),
+    countryCode: rawJob.countryId?.trim(),
     city: rawJob.cityName?.trim(),
     contractType: rawJob.missionType?.trim() ?? rawJob.missionTypeEn?.trim(),
     durationMonths: rawJob.missionDuration,
