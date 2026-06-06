@@ -78,6 +78,8 @@ model JobOffer {
   title              String
   companyName        String?                     @map("company_name")
   country            String?
+  // Code pays ISO alpha-2 (depuis raw_data.countryId) ; clé du filtre géo / régions.
+  countryCode        String?                     @map("country_code")
   city               String?
   contractType       String?                     @map("contract_type")
   durationMonths     Int?                        @map("duration_months")

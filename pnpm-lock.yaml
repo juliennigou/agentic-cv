@@ -41,6 +41,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@agentic-cv/ai':
+        specifier: workspace:*
+        version: link:../../packages/ai
       '@agentic-cv/db':
         specifier: workspace:*
         version: link:../../packages/db

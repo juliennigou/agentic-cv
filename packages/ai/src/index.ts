@@ -11,3 +11,5 @@ export {
   type OfferToStructure,
   type StructuredOffer
 } from "./structuring/gemini";
+
+export { embedQuery } from "./search/query-embedding";
