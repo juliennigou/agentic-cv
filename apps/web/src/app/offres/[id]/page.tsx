@@ -54,8 +54,19 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
           ) : null}
           {offer.companyDescription ? (
             <section>
-              <h2>À propos de l'entreprise</h2>
+              <div className="section-heading-row">
+                <h2>À propos de l'entreprise</h2>
+                {offer.companyDescriptionGenerated ? (
+                  <span className="tag tag-accent">Résumé IA</span>
+                ) : null}
+              </div>
               <p>{offer.companyDescription}</p>
+              {offer.companyDescriptionGenerated ? (
+                <p className="note-ai">
+                  Présentation générée automatiquement à partir du nom de l'entreprise, à titre
+                  indicatif.
+                </p>
+              ) : null}
             </section>
           ) : null}
         </article>

@@ -113,6 +113,9 @@ function toJobOfferUpdateInput(offer: UpsertableJobOffer): Prisma.JobOfferUpdate
     lastSeenAt: offer.scrapedAt,
     contentHash: offer.contentHash,
     rawData: offer.rawData as Prisma.InputJsonValue,
+    // Le contenu a changé : on réarme la structuration (qui ré-invalidera
+    // l'embedding) pour repartir d'un texte mission ↔ entreprise propre.
+    structuredAt: null,
     isActive: true
   };
 }

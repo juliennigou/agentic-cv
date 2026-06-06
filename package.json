@@ -14,6 +14,7 @@
     "db:generate": "pnpm --filter @agentic-cv/db db:generate",
     "db:migrate": "pnpm --filter @agentic-cv/db db:migrate",
     "scrape:business-france": "pnpm --filter @agentic-cv/worker scrape:business-france",
+    "structure:job-offers": "pnpm --filter @agentic-cv/worker structure:job-offers",
     "embed:job-offers": "pnpm --filter @agentic-cv/worker embed:job-offers"
   },
   "devDependencies": {

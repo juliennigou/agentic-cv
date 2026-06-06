@@ -85,6 +85,9 @@ model JobOffer {
   description        String
   // Présentation de l'entreprise, séparée de la mission (exclue de l'embedding).
   companyDescription String?                     @map("company_description")
+  // true = présentation générée par le LLM (entreprise connue) faute de bloc
+  // société dans l'offre ; affichée avec un badge « IA » côté UI.
+  companyDescriptionGenerated Boolean            @default(false) @map("company_description_generated")
   requirements       String?
   publishedAt        DateTime?                   @map("published_at")
   expiresAt          DateTime?                   @map("expires_at")
@@ -93,6 +96,9 @@ model JobOffer {
   lastSeenAt         DateTime                    @default(now()) @map("last_seen_at")
   contentHash        String                      @map("content_hash")
   rawData            Json                        @map("raw_data")
+  // Horodatage de la passe de structuration LLM (sépare mission ↔ entreprise).
+  // NULL = à (re)structurer ; remis à NULL quand le contenu change.
+  structuredAt       DateTime?                   @map("structured_at")
   // Embedding sémantique (Gemini, 768 dim) ; accès uniquement via $queryRaw/$executeRaw.
   embedding          Unsupported("vector(768)")?
   isActive           Boolean                     @default(true) @map("is_active")

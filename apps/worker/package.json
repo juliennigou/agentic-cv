@@ -8,6 +8,7 @@
     "dev": "tsx src/cli/scrape-business-france.ts",
     "lint": "tsc -p tsconfig.json --noEmit",
     "scrape:business-france": "tsx src/cli/scrape-business-france.ts",
+    "structure:job-offers": "tsx src/cli/structure-job-offers.ts",
     "embed:job-offers": "tsx src/cli/embed-job-offers.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

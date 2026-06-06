@@ -704,6 +704,22 @@ code {
   border-color: transparent;
 }
 
+/* Titre de section avec badge (ex. « Résumé IA »). */
+.section-heading-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+/* Mention discrète sous une présentation entreprise générée par IA. */
+.note-ai {
+  margin-top: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--muted);
+  font-style: italic;
+}
+
 /* =============================================================================
    Page détail offre
    ============================================================================= */
