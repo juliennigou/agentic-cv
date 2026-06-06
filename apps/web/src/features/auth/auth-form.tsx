@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
 import { signInWithPassword, signUpWithPassword } from "./actions";
 
@@ -14,6 +14,7 @@ export function AuthForm({ mode }: AuthFormProps) {
     status: "idle" as const,
     message: null
   });
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const submitLabel = mode === "signin" ? "Se connecter" : "Créer le compte";
 
   return (
@@ -25,7 +26,11 @@ export function AuthForm({ mode }: AuthFormProps) {
             className="field"
             name="email"
             type="email"
+            inputMode="email"
             autoComplete="email"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
             required
             placeholder="prenom.nom@email.com"
           />
@@ -33,23 +38,39 @@ export function AuthForm({ mode }: AuthFormProps) {
 
         <label className="form-field">
           <span>Mot de passe</span>
-          <input
-            className="field"
-            name="password"
-            type="password"
-            autoComplete={mode === "signin" ? "current-password" : "new-password"}
-            minLength={8}
-            required
-            placeholder="8 caractères minimum"
-          />
+          <div className="field-affix">
+            <input
+              className="field field-affix-input"
+              name="password"
+              type={passwordVisible ? "text" : "password"}
+              autoComplete={mode === "signin" ? "current-password" : "new-password"}
+              minLength={8}
+              required
+              placeholder="8 caractères minimum"
+            />
+            <button
+              type="button"
+              className="password-toggle"
+              onClick={() => setPasswordVisible((visible) => !visible)}
+              aria-pressed={passwordVisible}
+              aria-label={passwordVisible ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+            >
+              {passwordVisible ? "Masquer" : "Afficher"}
+            </button>
+          </div>
         </label>
       </div>
 
       {state.message ? (
-        <p className={state.status === "error" ? "form-error" : "form-success"}>{state.message}</p>
+        <p
+          className={state.status === "error" ? "form-error" : "form-success"}
+          role={state.status === "error" ? "alert" : "status"}
+        >
+          {state.message}
+        </p>
       ) : null}
 
-      <button className="btn btn-primary" type="submit" disabled={pending}>
+      <button className="btn btn-primary btn-full" type="submit" disabled={pending}>
         {pending ? "En cours..." : submitLabel}
       </button>
     </form>
