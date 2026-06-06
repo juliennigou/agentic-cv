@@ -101,7 +101,7 @@ model JobOffer {
   // Horodatage de la passe de structuration LLM (sépare mission ↔ entreprise).
   // NULL = à (re)structurer ; remis à NULL quand le contenu change.
   structuredAt       DateTime?                   @map("structured_at")
-  // Embedding sémantique (Gemini, 768 dim) ; accès uniquement via $queryRaw/$executeRaw.
+  // Embedding sémantique (768 dim) ; accès uniquement via $queryRaw/$executeRaw.
   embedding          Unsupported("vector(768)")?
   isActive           Boolean                     @default(true) @map("is_active")
   createdAt          DateTime                    @default(now()) @map("created_at")

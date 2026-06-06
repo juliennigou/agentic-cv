@@ -13,7 +13,7 @@ import { prisma } from "../client";
  *
  * Recherche EXACTE sur le sous-ensemble filtré (~800 offres) : recall parfaite,
  * pas de souci de post-filtrage HNSW. Dégrade proprement (full-text seul) si le
- * vecteur de requête est absent (Gemini indispo). Requête vide → tri par date.
+ * vecteur de requête est absent (embedding indispo). Requête vide → tri par date.
  *
  * Détail : docs/recherche-hybride.md
  */

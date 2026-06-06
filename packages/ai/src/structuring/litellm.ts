@@ -1,20 +1,8 @@
 import { z } from "zod";
 
-/**
- * Provider de structuration Gemini (free tier).
- *
- * Sépare une offre brute en deux blocs — présentation entreprise et mission —
- * car l'API Business France colle souvent la présentation de la société dans le
- * champ mission. Sortie JSON garantie via `responseSchema` + validée par Zod.
- *
- * Seul point du code qui dépend de l'API Google pour la structuration. Pour
- * changer de fournisseur, réimplémenter `structureOffers` à signature identique.
- */
+import { createChatCompletion, isLiteLlmConfigured } from "../litellm/client";
 
-const API_BASE = "https://generativelanguage.googleapis.com/v1beta";
-// flash-lite : ~1000 req/jour en free tier, suffisant pour le volume d'offres.
-// (gemini-3.5-flash est plafonné à ~20 req/jour sur le free tier.)
-const DEFAULT_MODEL = "gemini-2.5-flash-lite";
+const DEFAULT_MODEL = "deepseek/deepseek-chat";
 
 /** Offre brute à structurer. */
 export type OfferToStructure = {
@@ -40,9 +28,9 @@ export type StructuredOffer = {
   companyDescriptionGenerated: boolean;
 };
 
-/** Indique si la clé API est disponible (permet de skip proprement). */
+/** Indique si le proxy LiteLLM est disponible (permet de skip proprement). */
 export function isStructuringConfigured(): boolean {
-  return Boolean(process.env.GOOGLE_AI_API_KEY);
+  return isLiteLlmConfigured();
 }
 
 const PROMPT_INSTRUCTIONS = `Tu reçois un tableau JSON d'offres d'emploi V.I.E (champ "items").
@@ -68,27 +56,8 @@ Règles strictes :
 - Retire les en-têtes parasites ("Présentation de la société :", "Poste et missions :"…).
 - "description" ne doit jamais être vide : si la mission est introuvable, recopie
   le texte source restant.
-- Renvoie EXACTEMENT un objet par offre, dans le même ordre, avec le même "id".`;
-
-const responseSchema = {
-  type: "OBJECT",
-  properties: {
-    items: {
-      type: "ARRAY",
-      items: {
-        type: "OBJECT",
-        properties: {
-          id: { type: "STRING" },
-          description: { type: "STRING" },
-          companyDescription: { type: "STRING", nullable: true },
-          companyDescriptionGenerated: { type: "BOOLEAN" }
-        },
-        required: ["id", "description", "companyDescription", "companyDescriptionGenerated"]
-      }
-    }
-  },
-  required: ["items"]
-} as const;
+- Renvoie EXACTEMENT un objet JSON par offre, dans le même ordre, avec le même "id".
+- La réponse doit être un objet JSON valide de forme {"items":[...]}, sans Markdown.`;
 
 const structuredResponseSchema = z.object({
   items: z.array(
@@ -101,14 +70,23 @@ const structuredResponseSchema = z.object({
   )
 });
 
-const candidatesSchema = z.object({
-  candidates: z
-    .array(z.object({ content: z.object({ parts: z.array(z.object({ text: z.string() })) }) }))
-    .min(1)
-});
+function extractJsonObject(text: string): string {
+  const trimmed = text.trim();
+  if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+    return trimmed;
+  }
+
+  const firstBrace = trimmed.indexOf("{");
+  const lastBrace = trimmed.lastIndexOf("}");
+  if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
+    throw new Error("LiteLLM n'a pas renvoyé un objet JSON exploitable.");
+  }
+
+  return trimmed.slice(firstBrace, lastBrace + 1);
+}
 
 /**
- * Structure un lot d'offres en un seul appel `generateContent`.
+ * Structure un lot d'offres en un seul appel de chat completion.
  * Retourne un résultat par offre, réassocié par `id` (ordre d'entrée préservé).
  */
 export async function structureOffers(offers: OfferToStructure[]): Promise<StructuredOffer[]> {
@@ -116,13 +94,7 @@ export async function structureOffers(offers: OfferToStructure[]): Promise<Struc
     return [];
   }
 
-  const apiKey = process.env.GOOGLE_AI_API_KEY;
-  if (!apiKey) {
-    throw new Error("GOOGLE_AI_API_KEY n'est pas définie.");
-  }
-
-  const model = process.env.GEMINI_STRUCTURING_MODEL || DEFAULT_MODEL;
-
+  const model = process.env.LITELLM_STRUCTURING_MODEL || DEFAULT_MODEL;
   const payload = {
     items: offers.map((offer) => ({
       id: offer.id,
@@ -133,37 +105,30 @@ export async function structureOffers(offers: OfferToStructure[]): Promise<Struc
     }))
   };
 
-  const response = await fetch(`${API_BASE}/models/${model}:generateContent?key=${apiKey}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: `${PROMPT_INSTRUCTIONS}\n\n${JSON.stringify(payload)}` }] }],
-      generationConfig: {
-        temperature: 0,
-        // Marge suffisante pour reproduire verbatim plusieurs missions par lot
-        // sans troncature du JSON de sortie.
-        maxOutputTokens: 8192,
-        responseMimeType: "application/json",
-        responseSchema
+  const text = await createChatCompletion({
+    model,
+    temperature: 0,
+    max_tokens: 8192,
+    response_format: { type: "json_object" },
+    messages: [
+      {
+        role: "system",
+        content: PROMPT_INSTRUCTIONS
+      },
+      {
+        role: "user",
+        content: JSON.stringify(payload)
       }
-    })
+    ]
   });
 
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(`Échec de la requête de structuration Gemini (${response.status}): ${body}`);
-  }
-
-  const candidates = candidatesSchema.parse(await response.json());
-  const text = candidates.candidates[0].content.parts.map((part) => part.text).join("");
-  const parsed = structuredResponseSchema.parse(JSON.parse(text));
-
+  const parsed = structuredResponseSchema.parse(JSON.parse(extractJsonObject(text)));
   const byId = new Map(parsed.items.map((item) => [item.id, item]));
 
   return offers.map((offer) => {
     const item = byId.get(offer.id);
     if (!item) {
-      throw new Error(`Gemini n'a pas renvoyé de structuration pour l'offre ${offer.id}.`);
+      throw new Error(`LiteLLM n'a pas renvoyé de structuration pour l'offre ${offer.id}.`);
     }
 
     const description = item.description.trim();

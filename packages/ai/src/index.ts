@@ -3,13 +3,13 @@ export {
   embedTexts,
   isEmbeddingConfigured,
   type EmbeddingTaskType
-} from "./embeddings/gemini";
+} from "./embeddings/litellm";
 
 export {
   isStructuringConfigured,
   structureOffers,
   type OfferToStructure,
   type StructuredOffer
-} from "./structuring/gemini";
+} from "./structuring/litellm";
 
 export { embedQuery } from "./search/query-embedding";

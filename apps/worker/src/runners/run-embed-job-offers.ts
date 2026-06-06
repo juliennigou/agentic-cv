@@ -6,7 +6,7 @@ import {
 } from "@agentic-cv/db";
 
 export type EmbedJobOffersOptions = {
-  /** Nombre d'offres par appel batch Gemini. */
+  /** Nombre d'offres par appel batch d'embedding. */
   batchSize?: number;
   /** Plafond d'offres traitées sur ce run (utile pour tester). */
   maxOffers?: number;
@@ -36,7 +36,7 @@ function buildOfferEmbeddingText(offer: OfferNeedingEmbedding): string {
  * Passe d'embedding : traite par lots les offres dont `embedding IS NULL`.
  *
  * Idempotente — couvre à la fois les nouvelles offres et le backfill initial.
- * Découplée du scraping : un échec Gemini n'impacte jamais l'ingestion.
+ * Découplée du scraping : un échec d'embedding n'impacte jamais l'ingestion.
  */
 export async function runEmbedJobOffers(
   options: EmbedJobOffersOptions = {}
@@ -51,7 +51,7 @@ export async function runEmbedJobOffers(
 
   if (!isEmbeddingConfigured()) {
     result.status = "skipped";
-    result.errors.push("GOOGLE_AI_API_KEY absente ; passe d'embedding ignorée.");
+    result.errors.push("LITELLM_BASE_URL ou LITELLM_API_KEY absent ; passe d'embedding ignorée.");
     return result;
   }
 

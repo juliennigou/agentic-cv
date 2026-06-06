@@ -1,10 +1,10 @@
-import { embedTexts, isEmbeddingConfigured } from "../embeddings/gemini";
+import { embedTexts, isEmbeddingConfigured } from "../embeddings/litellm";
 
 /**
  * Embedding d'une requête de recherche (taskType RETRIEVAL_QUERY), avec cache
- * mémoire pour économiser le quota Gemini sur les requêtes répétées.
+ * mémoire pour économiser les appels d'embedding sur les requêtes répétées.
  *
- * Renvoie `null` si Gemini est indisponible/non configuré ou en cas d'erreur :
+ * Renvoie `null` si LiteLLM est indisponible/non configuré ou en cas d'erreur :
  * la recherche hybride retombe alors proprement sur le full-text seul.
  */
 

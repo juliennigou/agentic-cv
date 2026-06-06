@@ -33,7 +33,7 @@ Sources :
 2. **Récence = 3ᵉ signal RRF à poids faible** (et non un tri secondaire bricolé) :
    `is_active` reste le _gate_, la pertinence domine, la fraîcheur donne un léger
    coup de pouce — sans casser les échelles.
-3. **Dégradation gracieuse native** : si Gemini est indisponible/quota épuisé → la liste
+3. **Dégradation gracieuse native** : si l'embedding est indisponible/quota épuisé → la liste
    sémantique est vide → résultats = full-text seul. Si une offre n'a pas d'embedding →
    elle reste trouvable via le lexical. Requête vide → tri par date (mode « parcourir »).
 
@@ -82,7 +82,7 @@ Helpers : `listRegions()`, `regionCountryCodes(region)`, `countriesForRegion(reg
 - `embedQuery(text)` : `embedTexts([text], { taskType: "RETRIEVAL_QUERY" })`.
 - **Cache mémoire** (clé = texte normalisé minuscule/trim, TTL ~10 min) pour économiser
   le quota sur requêtes répétées.
-- Renvoie `null` proprement si Gemini indisponible → le RRF dégrade en lexical.
+- Renvoie `null` proprement si LiteLLM est indisponible → le RRF dégrade en lexical.
 
 ## 5. Repository `searchJobOffers()` (`packages/db`)
 
@@ -123,7 +123,7 @@ final     → score = wSem/(k+rank_s) + wLex/(k+rank_l) + wRec/(k+rank_r)
 ## 7. Séquencement & vérification
 
 1. Migration + `pnpm db:generate` + backfill `country_code` (le `fts` se remplit seul).
-2. **Full-text + filtres + RRF testables immédiatement** (sans dépendre du quota Gemini).
+2. **Full-text + filtres + RRF testables immédiatement** (sans dépendre du quota embedding).
 3. Le **sémantique s'allume** dès que les embeddings sont peuplés (rien à changer).
 4. `pnpm typecheck` / `lint` / `format` verts à chaque étape.
 
