@@ -12,6 +12,7 @@
   "dependencies": {
     "@agentic-cv/ai": "workspace:*",
     "@agentic-cv/db": "workspace:*",
+    "@agentic-cv/documents": "workspace:*",
     "@agentic-cv/shared": "workspace:*",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.107.0",

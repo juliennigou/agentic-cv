@@ -26,10 +26,19 @@ export {
 export {
   getOrCreateUserProfile,
   updateUserProfile,
+  saveUserResume,
   type UserProfileDetail,
   type UserProfileInput,
-  type UserProfileUpdateInput
+  type UserProfileUpdateInput,
+  type SaveResumeInput
 } from "./repositories/user-profile-repository";
+export {
+  createUserDocument,
+  listUserDocuments,
+  getLatestBaseResume,
+  type CreateUserDocumentInput,
+  type UserDocumentDetail
+} from "./repositories/user-document-repository";
 export {
   acquireScrapeLock,
   completeScrapeRun,

@@ -12,4 +12,6 @@ export {
   type StructuredOffer
 } from "./structuring/litellm";
 
+export { isResumeStructuringConfigured, structureResume } from "./resume/litellm";
+
 export { embedQuery } from "./search/query-embedding";

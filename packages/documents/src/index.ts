@@ -1,3 +1,1 @@
-export type DocumentModuleStatus = "planned";
-
-export const documentModuleStatus: DocumentModuleStatus = "planned";
+export { extractPdfText, EmptyPdfTextError } from "./pdf/extract-text";
