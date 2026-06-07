@@ -2,16 +2,20 @@ import { listActiveJobOffers, listActiveOfferCountries } from "@agentic-cv/db";
 import { listRegions } from "@agentic-cv/shared";
 
 import { SiteHeader } from "@/components/site-header";
+import { getCurrentUser } from "@/features/auth/current-user";
 import { OfferSearch } from "@/features/offers/offer-search";
 import { parseSearchCriteria } from "@/features/offers/search";
+import { withUserOfferStates } from "@/features/offers/user-offer-state";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [offers, countries] = await Promise.all([
+  const user = await getCurrentUser();
+  const [rawOffers, countries] = await Promise.all([
     listActiveJobOffers(12),
     listActiveOfferCountries()
   ]);
+  const offers = await withUserOfferStates(rawOffers, user?.id);
 
   return (
     <main className="page-shell">

@@ -15,6 +15,7 @@ export type OfferListItem = {
   durationMonths: number | null;
   description: string;
   publishedAt: Date | null;
+  userState?: OfferUserState;
 };
 
 export type OfferDetail = OfferListItem & {
@@ -22,6 +23,23 @@ export type OfferDetail = OfferListItem & {
   salary: string | null;
   requirements: string | null;
   scrapedAt: Date;
+};
+
+export type OfferApplicationStatus =
+  | "saved"
+  | "unread"
+  | "read"
+  | "to_apply"
+  | "in_progress"
+  | "applied"
+  | "completed"
+  | "interview"
+  | "rejected"
+  | "accepted";
+
+export type OfferUserState = {
+  favorite: boolean;
+  applicationStatus: OfferApplicationStatus | null;
 };
 
 export function formatLocation(city: string | null, country: string | null): string | null {

@@ -6,9 +6,10 @@ import { signInWithPassword, signUpWithPassword } from "./actions";
 
 type AuthFormProps = {
   mode: "signin" | "signup";
+  next?: string;
 };
 
-export function AuthForm({ mode }: AuthFormProps) {
+export function AuthForm({ mode, next = "/compte" }: AuthFormProps) {
   const action = mode === "signin" ? signInWithPassword : signUpWithPassword;
   const [state, formAction, pending] = useActionState(action, {
     status: "idle" as const,
@@ -19,6 +20,8 @@ export function AuthForm({ mode }: AuthFormProps) {
 
   return (
     <form className="form-panel" action={formAction}>
+      <input type="hidden" name="next" value={next} />
+
       <div className="form-grid">
         <label className="form-field">
           <span>Email</span>

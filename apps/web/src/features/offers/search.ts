@@ -4,6 +4,9 @@ import { embedQuery } from "@agentic-cv/ai";
 import { searchJobOffers, type JobOfferSearchResult } from "@agentic-cv/db";
 import { isRegionKey, regionCountryCodes, type RegionKey } from "@agentic-cv/shared";
 
+import type { OfferListItem } from "./offer-view";
+import { withUserOfferStates } from "./user-offer-state";
+
 /** Filtres de recherche normalisés depuis les query params. */
 export type OfferSearchCriteria = {
   query: string;
@@ -46,14 +49,17 @@ function resolveCountryCodes(criteria: OfferSearchCriteria): string[] {
 
 /** Exécute la recherche hybride à partir des critères normalisés. */
 export async function runOfferSearch(
-  criteria: OfferSearchCriteria
-): Promise<JobOfferSearchResult[]> {
+  criteria: OfferSearchCriteria,
+  userId?: string | null
+): Promise<OfferListItem[]> {
   const queryVector = criteria.query.length > 0 ? await embedQuery(criteria.query) : null;
 
-  return searchJobOffers({
+  const offers: JobOfferSearchResult[] = await searchJobOffers({
     query: criteria.query,
     countryCodes: resolveCountryCodes(criteria),
     queryVector,
     limit: PAGE_SIZE
   });
+
+  return withUserOfferStates(offers, userId);
 }

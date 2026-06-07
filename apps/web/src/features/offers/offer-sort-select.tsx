@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import { OfferCard } from "./offer-card";
@@ -15,6 +16,9 @@ export function OfferResults({
   initialSort: OfferSort;
 }) {
   const [sort, setSort] = useState<OfferSort>(initialSort);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const returnTo = `${pathname}${searchParams.size > 0 ? `?${searchParams.toString()}` : ""}`;
   const sortedOffers = useMemo(() => {
     if (sort === "relevance") {
       return offers;
@@ -45,12 +49,12 @@ export function OfferResults({
         </select>
       </div>
 
-      <OfferList offers={sortedOffers} />
+      <OfferList offers={sortedOffers} returnTo={returnTo} />
     </>
   );
 }
 
-function OfferList({ offers }: { offers: OfferListItem[] }) {
+function OfferList({ offers, returnTo }: { offers: OfferListItem[]; returnTo: string }) {
   if (offers.length === 0) {
     return (
       <div className="empty-state">
@@ -62,7 +66,7 @@ function OfferList({ offers }: { offers: OfferListItem[] }) {
   return (
     <div className="offer-list">
       {offers.map((offer) => (
-        <OfferCard key={offer.id} offer={offer} />
+        <OfferCard key={offer.id} offer={offer} returnTo={returnTo} />
       ))}
     </div>
   );

@@ -330,6 +330,12 @@ code {
   background: var(--surface-2);
 }
 
+.btn-compact {
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  font-size: var(--text-xs);
+}
+
 /* Action destructive — texte rouge, fond rouge subtil au survol */
 .btn-danger {
   background: var(--surface);
@@ -868,11 +874,6 @@ code {
   text-decoration: none;
 }
 
-.offer-card:hover .offer-arrow {
-  color: var(--accent);
-  transform: translateX(2px);
-}
-
 .offer-head {
   display: flex;
   align-items: flex-start;
@@ -888,6 +889,15 @@ code {
   line-height: var(--leading-snug);
   letter-spacing: -0.01em;
   margin: 0;
+}
+
+.offer-title a {
+  color: var(--ink);
+}
+
+.offer-title a:hover {
+  color: var(--accent);
+  text-decoration: none;
 }
 
 .offer-company {
@@ -913,6 +923,13 @@ code {
   font-size: var(--text-sm);
   line-height: var(--leading-snug);
   max-width: 72ch;
+}
+
+.offer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 .offer-meta {
@@ -968,6 +985,65 @@ code {
   color: var(--accent);
   background: var(--accent-soft);
   border-color: transparent;
+}
+
+.icon-button {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  font-size: var(--text-lg);
+  line-height: 1;
+  transition:
+    background var(--motion-fast) var(--ease),
+    border-color var(--motion-fast) var(--ease),
+    color var(--motion-fast) var(--ease);
+}
+
+.icon-button:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+/* Favori actif — étoile pleine accent, fond doux, bordure accent */
+.icon-button[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.icon-button[aria-pressed="true"]:hover {
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+}
+
+.icon-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Variante compacte (cartes kanban, lignes de tableau) */
+.icon-button-sm {
+  width: 32px;
+  height: 32px;
+  font-size: var(--text-base);
+}
+
+/* Bouton favori plein (fiche détail) — état « dans mes favoris » accentué */
+.btn-ghost[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.btn-ghost[aria-pressed="true"]:hover {
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  border-color: var(--accent);
 }
 
 /* Titre de section avec badge (ex. « Résumé IA »). */
@@ -1054,6 +1130,44 @@ code {
   padding: var(--space-5);
 }
 
+.offer-state-panel,
+.status-form {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.offer-state-panel {
+  padding-bottom: var(--space-5);
+  border-bottom: 1px solid var(--border);
+}
+
+.offer-state-title {
+  margin-top: var(--space-1);
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 600;
+}
+
+.tracked-offer-card {
+  gap: var(--space-3);
+}
+
+.tracked-offer-actions,
+.status-inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.status-inline-form {
+  flex: 1 1 280px;
+}
+
+.status-inline-form .field {
+  min-width: min(100%, 180px);
+}
+
 /* Liste de définitions en mono */
 .facts {
   display: grid;
@@ -1078,6 +1192,281 @@ code {
   margin: 0;
   font-size: var(--text-sm);
   color: var(--ink);
+}
+
+/* =============================================================================
+   Mes VIE — bascule de vue, board kanban, tableau
+   ============================================================================= */
+
+/* Champ compact (select de statut dans cartes / lignes) */
+.field-compact {
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-mono);
+}
+
+/* Bascule segmentée Kanban / Tableau */
+.view-toggle {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.view-toggle-option {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-mono);
+  color: var(--muted);
+  transition:
+    background var(--motion-fast) var(--ease),
+    color var(--motion-fast) var(--ease);
+}
+
+.view-toggle-option:hover {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.view-toggle-option[aria-current="page"] {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Board kanban — colonnes par groupe de statut */
+.vie-board {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.vie-column {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  padding: var(--space-3);
+}
+
+.vie-column-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.vie-column-title {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.vie-column-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+
+.vie-column-body {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.vie-column-empty {
+  margin: 0;
+  padding: var(--space-4) var(--space-2);
+  text-align: center;
+  font-size: var(--text-xs);
+  color: var(--faint);
+}
+
+.vie-card {
+  display: grid;
+  gap: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  padding: var(--space-3);
+}
+
+.vie-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.vie-card-title {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  line-height: var(--leading-snug);
+}
+
+.vie-card-title a {
+  color: var(--ink);
+}
+
+.vie-card-title a:hover {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.vie-card-company {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-mono);
+  color: var(--muted);
+}
+
+/* Form de statut dans une carte / cellule */
+.status-cell-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.status-cell-form .field {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Tableau dense des offres suivies */
+.vie-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.vie-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.vie-table th {
+  text-align: left;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--faint);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.vie-table td {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+  color: var(--ink);
+}
+
+.vie-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.vie-table-title {
+  display: block;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.vie-table-title:hover {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.vie-table-company {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-mono);
+  color: var(--muted);
+}
+
+.vie-table-date {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-mono);
+  color: var(--faint);
+  white-space: nowrap;
+}
+
+.vie-table-actions {
+  text-align: right;
+}
+
+/* Bouton de déconnexion dans la nav du compte */
+.account-signout {
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
+}
+
+.account-tab-action {
+  width: 100%;
+  border: 1px solid transparent;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  color: var(--danger);
+}
+
+.account-tab-action:hover {
+  background: color-mix(in srgb, var(--danger) 8%, var(--surface));
+  border-color: var(--border);
+}
+
+.account-tab-action .account-tab-label {
+  color: var(--danger);
+}
+
+@media (min-width: 761px) {
+  .vie-board {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  /* Sépare visuellement le bloc déconnexion en bas de la sidebar */
+  .account-signout {
+    margin-top: var(--space-4);
+  }
+}
+
+@media (max-width: 560px) {
+  .vie-board {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* =============================================================================

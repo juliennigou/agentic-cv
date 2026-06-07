@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { signOut } from "@/features/auth/actions";
+
 const TABS = [
   { href: "/compte/profil", label: "Profil", hint: "Identité & contact" },
   { href: "/compte/cv", label: "Mon CV", hint: "Dépôt & parcours" },
@@ -28,6 +30,13 @@ export function AccountNav() {
           </Link>
         );
       })}
+
+      <form className="account-signout" action={signOut}>
+        <button className="account-tab account-tab-action" type="submit">
+          <span className="account-tab-label">Déconnexion</span>
+          <span className="account-tab-hint">Fermer ma session</span>
+        </button>
+      </form>
     </nav>
   );
 }
