@@ -42,6 +42,16 @@ export {
   type UserDocumentDetail
 } from "./repositories/user-document-repository";
 export {
+  getUserOfferState,
+  listUserFavoriteJobOffers,
+  listUserOfferStates,
+  removeSavedJobForUser,
+  saveJobForUser,
+  setUserJobApplicationStatus,
+  type TrackedJobOffer,
+  type UserJobOfferState
+} from "./repositories/user-job-offer-repository";
+export {
   acquireScrapeLock,
   completeScrapeRun,
   createScrapeRun,

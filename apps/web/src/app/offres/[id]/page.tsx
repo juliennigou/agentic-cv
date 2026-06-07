@@ -1,8 +1,15 @@
-import { getJobOfferById } from "@agentic-cv/db";
+import { getJobOfferById, getUserOfferState } from "@agentic-cv/db";
 import { notFound } from "next/navigation";
 
 import { SiteHeader } from "@/components/site-header";
+import { getCurrentUser } from "@/features/auth/current-user";
+import { toggleFavoriteJob, updateJobApplicationStatus } from "@/features/offers/actions";
 import { formatDate, formatDuration, formatLocation } from "@/features/offers/offer-view";
+import {
+  formatOfferStatus,
+  OFFER_STATUS_LABELS,
+  TRACKED_OFFER_STATUSES
+} from "@/features/offers/status";
 
 export const dynamic = "force-dynamic";
 
@@ -12,11 +19,15 @@ type OfferDetailPageProps = {
 
 export default async function OfferDetailPage({ params }: OfferDetailPageProps) {
   const { id } = await params;
-  const offer = await getJobOfferById(id);
+  const [offer, user] = await Promise.all([getJobOfferById(id), getCurrentUser()]);
 
   if (!offer) {
     notFound();
   }
+
+  const userState = user ? await getUserOfferState(user.id, offer.id) : null;
+  const favorite = userState?.favorite ?? false;
+  const applicationStatus = userState?.applicationStatus ?? null;
 
   const location = formatLocation(offer.city, offer.country);
   const duration = formatDuration(offer.durationMonths);
@@ -72,6 +83,45 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
         </article>
 
         <aside className="detail-aside">
+          <div className="offer-state-panel">
+            <div>
+              <span className="eyebrow">Suivi</span>
+              <p className="offer-state-title">{formatOfferStatus(applicationStatus)}</p>
+            </div>
+
+            <form action={toggleFavoriteJob}>
+              <input type="hidden" name="jobOfferId" value={offer.id} />
+              <input type="hidden" name="intent" value={favorite ? "remove" : "save"} />
+              <input type="hidden" name="returnTo" value={`/offres/${offer.id}`} />
+              <button className="btn btn-ghost btn-full" type="submit" aria-pressed={favorite}>
+                <span aria-hidden="true">{favorite ? "★" : "☆"}</span>
+                {favorite ? "Dans mes favoris" : "Ajouter aux favoris"}
+              </button>
+            </form>
+
+            <form className="status-form" action={updateJobApplicationStatus}>
+              <input type="hidden" name="jobOfferId" value={offer.id} />
+              <input type="hidden" name="returnTo" value={`/offres/${offer.id}`} />
+              <label className="form-field">
+                <span>Statut</span>
+                <select
+                  className="field"
+                  name="status"
+                  defaultValue={applicationStatus ?? "unread"}
+                >
+                  {TRACKED_OFFER_STATUSES.map((status) => (
+                    <option key={status} value={status}>
+                      {OFFER_STATUS_LABELS[status]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button className="btn btn-ghost btn-full" type="submit">
+                Mettre à jour
+              </button>
+            </form>
+          </div>
+
           <dl className="facts">
             {offer.companyName ? (
               <div>
@@ -118,6 +168,9 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
           <a className="btn btn-primary" href={offer.sourceUrl} target="_blank" rel="noreferrer">
             Voir l'offre originale ↗
           </a>
+          <button className="btn btn-ghost" type="button" disabled>
+            Préparer ma candidature
+          </button>
         </aside>
       </div>
     </main>

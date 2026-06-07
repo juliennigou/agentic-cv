@@ -7,6 +7,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
+import { defaultAuthRedirect, getSafeNextPath } from "./redirects";
+
 type AuthActionState = {
   status: "idle" | "error" | "success";
   message: string | null;
@@ -23,7 +25,6 @@ type CredentialsResult =
       error: string;
     };
 
-const defaultRedirect = "/compte";
 const allowedOAuthProviders = new Set<Provider>(["github", "google"]);
 
 async function getRequestOrigin() {
@@ -40,9 +41,9 @@ async function getRequestOrigin() {
   return `${protocol}://${host}`;
 }
 
-async function getAuthCallbackUrl(next = defaultRedirect) {
+async function getAuthCallbackUrl(next = defaultAuthRedirect) {
   const callbackUrl = new URL("/auth/callback", await getRequestOrigin());
-  callbackUrl.searchParams.set("next", next);
+  callbackUrl.searchParams.set("next", getSafeNextPath(next));
 
   return callbackUrl.toString();
 }
@@ -86,6 +87,7 @@ export async function signInWithPassword(
   }
 
   const credentials = readCredentials(formData);
+  const next = getSafeNextPath(String(formData.get("next") ?? ""));
 
   if (!credentials.ok) {
     return {
@@ -107,7 +109,7 @@ export async function signInWithPassword(
     };
   }
 
-  redirect(defaultRedirect);
+  redirect(next);
 }
 
 export async function signUpWithPassword(
@@ -122,6 +124,7 @@ export async function signUpWithPassword(
   }
 
   const credentials = readCredentials(formData);
+  const next = getSafeNextPath(String(formData.get("next") ?? ""));
 
   if (!credentials.ok) {
     return {
@@ -135,7 +138,7 @@ export async function signUpWithPassword(
     email: credentials.email,
     password: credentials.password,
     options: {
-      emailRedirectTo: await getAuthCallbackUrl()
+      emailRedirectTo: await getAuthCallbackUrl(next)
     }
   });
 
@@ -147,7 +150,7 @@ export async function signUpWithPassword(
   }
 
   if (data.session) {
-    redirect(defaultRedirect);
+    redirect(next);
   }
 
   return {
@@ -171,12 +174,13 @@ export async function signInWithOAuth(formData: FormData) {
   }
 
   const provider = String(formData.get("provider") ?? "");
+  const next = getSafeNextPath(String(formData.get("next") ?? ""));
 
   if (!allowedOAuthProviders.has(provider as Provider)) {
     redirect("/connexion?error=oauth_provider");
   }
 
-  const redirectTo = await getAuthCallbackUrl();
+  const redirectTo = await getAuthCallbackUrl(next);
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: provider as Provider,

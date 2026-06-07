@@ -4,6 +4,7 @@ import { listRegions } from "@agentic-cv/shared";
 import { SiteHeader } from "@/components/site-header";
 import { OfferSearch } from "@/features/offers/offer-search";
 import { parseSearchCriteria, runOfferSearch } from "@/features/offers/search";
+import { getCurrentUser } from "@/features/auth/current-user";
 
 export const dynamic = "force-dynamic";
 
@@ -13,8 +14,9 @@ type OffersPageProps = {
 
 export default async function OffersPage({ searchParams }: OffersPageProps) {
   const criteria = parseSearchCriteria(await searchParams);
+  const user = await getCurrentUser();
   const [offers, countries] = await Promise.all([
-    runOfferSearch(criteria),
+    runOfferSearch(criteria, user?.id),
     listActiveOfferCountries()
   ]);
 

@@ -4,6 +4,7 @@ import { SiteHeader } from "@/components/site-header";
 import { AuthForm } from "@/features/auth/auth-form";
 import { getCurrentUser } from "@/features/auth/current-user";
 import { OAuthButtons } from "@/features/auth/oauth-buttons";
+import { getSafeNextPath } from "@/features/auth/redirects";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 export const dynamic = "force-dynamic";
@@ -12,6 +13,7 @@ type SignInPageProps = {
   searchParams: Promise<{
     error?: string;
     mode?: string;
+    next?: string;
   }>;
 };
 
@@ -27,6 +29,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
   const resolvedSearchParams = await searchParams;
   const user = await getCurrentUser();
   const mode = resolvedSearchParams.mode === "signup" ? "signup" : "signin";
+  const next = getSafeNextPath(resolvedSearchParams.next);
   const authErrorMessage = resolvedSearchParams.error
     ? authErrorMessages[resolvedSearchParams.error]
     : null;
@@ -37,7 +40,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
       : "Connecte-toi pour sauvegarder des offres et préparer progressivement ton profil candidat.";
 
   if (user) {
-    redirect("/compte");
+    redirect(next);
   }
 
   return (
@@ -82,13 +85,13 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
                 </p>
               ) : null}
 
-              <OAuthButtons />
+              <OAuthButtons next={next} />
 
               <div className="divider">
                 <span>ou avec ton email</span>
               </div>
 
-              <AuthForm mode={mode} />
+              <AuthForm mode={mode} next={next} />
             </>
           )}
         </section>
