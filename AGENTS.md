@@ -100,6 +100,20 @@ Filtrer un package : `pnpm --filter @agentic-cv/<pkg> <script>`.
 - Les repositories implémentent les interfaces de `scraper-core` (ex.
   `PrismaJobOfferRepository implements JobOfferRepository`).
 - Ne jamais éditer une migration déjà committée ; en créer une nouvelle.
+- **Colonnes que Prisma ne sait pas représenter** (types `Unsupported(...)` comme
+  `embedding vector(768)` / `fts tsvector`, colonnes `GENERATED ALWAYS AS … STORED`,
+  index GIN/HNSW sur ces colonnes) : elles sont déclarées au mieux dans le schéma
+  (`fts Unsupported("tsvector")?`) pour éviter un `DROP COLUMN`, mais Prisma ne peut
+  pas exprimer le `GENERATED` ni les index sur colonnes `Unsupported`. `migrate dev`
+  proposera donc toujours un diff résiduel (drop des index `embedding`/`fts`, `ALTER
+COLUMN fts DROP DEFAULT`). **Ne pas appliquer ce diff.**
+  - Pour appliquer les migrations existantes : `pnpm --filter @agentic-cv/db exec
+prisma migrate deploy` (jamais de diff, jamais de drop).
+  - Pour créer une _vraie_ nouvelle migration : `prisma migrate dev --create-only`,
+    puis **supprimer à la main** les `DROP INDEX`/`DROP DEFAULT` parasites ci-dessus
+    du fichier généré avant de committer.
+  - Prisma lancé depuis `packages/db` ne charge pas le `.env` racine : exporter les
+    vars d'abord (`set -a && source ../../.env && set +a`).
 
 ---
 
