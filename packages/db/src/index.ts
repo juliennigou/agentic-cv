@@ -12,9 +12,11 @@ export {
 } from "./repositories/job-offer-structuring-repository";
 export {
   searchJobOffers,
+  debugSearchJobOffers,
   listActiveOfferCountries,
   type SearchJobOffersParams,
   type JobOfferSearchResult,
+  type JobOfferSearchDebugResult,
   type OfferCountry
 } from "./repositories/job-offer-search-repository";
 export {

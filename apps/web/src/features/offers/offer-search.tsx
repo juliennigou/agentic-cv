@@ -1,7 +1,7 @@
 import { regionCountryCodes, type RegionKey } from "@agentic-cv/shared";
 
 import type { OfferSearchCriteria } from "./search";
-import { OfferCard } from "./offer-card";
+import { OfferResults } from "./offer-sort-select";
 import type { OfferListItem } from "./offer-view";
 
 type OfferSearchProps = {
@@ -64,24 +64,10 @@ export function OfferSearch({ offers, criteria, regions, countries }: OfferSearc
         </button>
       </form>
 
-      <div className="section-head">
-        <p className="count">
-          <strong>{offers.length}</strong> offre{offers.length > 1 ? "s" : ""} active
-          {offers.length > 1 ? "s" : ""}
-        </p>
-      </div>
-
-      {offers.length === 0 ? (
-        <div className="empty-state">
-          Aucune offre ne correspond à ta recherche. Élargis les filtres ou modifie les mots-clés.
-        </div>
-      ) : (
-        <div className="offer-list">
-          {offers.map((offer) => (
-            <OfferCard key={offer.id} offer={offer} />
-          ))}
-        </div>
-      )}
+      <OfferResults
+        offers={offers}
+        initialSort={criteria.query.length > 0 ? "relevance" : "date"}
+      />
     </section>
   );
 }

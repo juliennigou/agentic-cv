@@ -10,6 +10,7 @@ export type StructureJobOffersOptions = {
   batchSize?: number;
   /** Plafond d'offres traitées sur ce run (utile pour tester). */
   maxOffers?: number;
+  log?: (message: string) => void;
 };
 
 export type StructureJobOffersResult = {
@@ -46,10 +47,12 @@ export async function runStructureJobOffers(
     result.errors.push(
       "LITELLM_BASE_URL ou LITELLM_API_KEY absent ; passe de structuration ignorée."
     );
+    options.log?.("[structure] skipped: LiteLLM non configuré");
     return result;
   }
 
   const batchSize = options.batchSize ?? DEFAULT_BATCH_SIZE;
+  options.log?.(`[structure] started: batchSize=${batchSize}`);
 
   for (;;) {
     const remaining =
@@ -63,10 +66,12 @@ export async function runStructureJobOffers(
     const limit = Math.min(batchSize, remaining);
     const offers: OfferNeedingStructuring[] = await listOffersNeedingStructuring(limit);
     if (offers.length === 0) {
+      options.log?.("[structure] no pending offers");
       break;
     }
 
     try {
+      options.log?.(`[structure] batch ${result.batches + 1}: processing ${offers.length} offers`);
       const structured = await structureOffers(
         offers.map((offer) => ({
           id: offer.id,
@@ -87,11 +92,15 @@ export async function runStructureJobOffers(
 
       result.structured += structured.length;
       result.batches += 1;
+      options.log?.(
+        `[structure] batch ${result.batches}: structured=${structured.length}, total=${result.structured}`
+      );
     } catch (error) {
       // On stoppe au premier échec de lot pour ne pas marteler l'API ;
       // les offres restent non structurées et seront retentées au prochain run.
       result.failed += offers.length;
       result.errors.push(error instanceof Error ? error.message : String(error));
+      options.log?.(`[structure] failed: batch=${result.batches + 1}, offers=${offers.length}`);
       break;
     }
   }
@@ -99,6 +108,9 @@ export async function runStructureJobOffers(
   if (result.failed > 0) {
     result.status = result.structured > 0 ? "partial_success" : "failed";
   }
+  options.log?.(
+    `[structure] done: status=${result.status}, structured=${result.structured}, batches=${result.batches}, failed=${result.failed}`
+  );
 
   return result;
 }

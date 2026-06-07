@@ -5,8 +5,10 @@
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "debug:search": "tsx src/cli/debug-search.ts",
     "dev": "tsx src/cli/scrape-business-france.ts",
     "lint": "tsc -p tsconfig.json --noEmit",
+    "pipeline:job-offers": "tsx src/cli/job-offer-pipeline.ts",
     "scrape:business-france": "tsx src/cli/scrape-business-france.ts",
     "structure:job-offers": "tsx src/cli/structure-job-offers.ts",
     "embed:job-offers": "tsx src/cli/embed-job-offers.ts",
