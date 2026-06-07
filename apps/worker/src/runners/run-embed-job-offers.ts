@@ -10,6 +10,7 @@ export type EmbedJobOffersOptions = {
   batchSize?: number;
   /** Plafond d'offres traitées sur ce run (utile pour tester). */
   maxOffers?: number;
+  log?: (message: string) => void;
 };
 
 export type EmbedJobOffersResult = {
@@ -52,10 +53,12 @@ export async function runEmbedJobOffers(
   if (!isEmbeddingConfigured()) {
     result.status = "skipped";
     result.errors.push("LITELLM_BASE_URL ou LITELLM_API_KEY absent ; passe d'embedding ignorée.");
+    options.log?.("[embed] skipped: LiteLLM non configuré");
     return result;
   }
 
   const batchSize = options.batchSize ?? DEFAULT_BATCH_SIZE;
+  options.log?.(`[embed] started: batchSize=${batchSize}`);
 
   for (;;) {
     const remaining =
@@ -69,10 +72,12 @@ export async function runEmbedJobOffers(
     const limit = Math.min(batchSize, remaining);
     const offers = await listOffersNeedingEmbedding(limit);
     if (offers.length === 0) {
+      options.log?.("[embed] no pending offers");
       break;
     }
 
     try {
+      options.log?.(`[embed] batch ${result.batches + 1}: processing ${offers.length} offers`);
       const embeddings = await embedTexts(offers.map(buildOfferEmbeddingText), {
         taskType: "RETRIEVAL_DOCUMENT"
       });
@@ -83,11 +88,15 @@ export async function runEmbedJobOffers(
 
       result.embedded += offers.length;
       result.batches += 1;
+      options.log?.(
+        `[embed] batch ${result.batches}: embedded=${offers.length}, total=${result.embedded}`
+      );
     } catch (error) {
       // On stoppe au premier échec de lot pour ne pas marteler l'API ;
       // les offres restent NULL et seront retentées au prochain run.
       result.failed += offers.length;
       result.errors.push(error instanceof Error ? error.message : String(error));
+      options.log?.(`[embed] failed: batch=${result.batches + 1}, offers=${offers.length}`);
       break;
     }
   }
@@ -95,6 +104,9 @@ export async function runEmbedJobOffers(
   if (result.failed > 0) {
     result.status = result.embedded > 0 ? "partial_success" : "failed";
   }
+  options.log?.(
+    `[embed] done: status=${result.status}, embedded=${result.embedded}, batches=${result.batches}, failed=${result.failed}`
+  );
 
   return result;
 }

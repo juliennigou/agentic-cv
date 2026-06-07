@@ -6,14 +6,15 @@ import { redirect } from "next/navigation";
 
 import { getCurrentUser } from "@/features/auth/current-user";
 
-import { profileFormSchema } from "./profile-schema";
+import { identitySchema, preferencesSchema } from "./profile-schema";
 
-type ProfileActionState = {
+export type ProfileActionState = {
   status: "idle" | "error" | "success";
   message: string | null;
 };
 
-export async function updateProfile(
+/** Onglet « Profil » : enregistre l'identité & le contact (mise à jour partielle). */
+export async function updateIdentity(
   _state: ProfileActionState,
   formData: FormData
 ): Promise<ProfileActionState> {
@@ -23,29 +24,45 @@ export async function updateProfile(
     redirect("/connexion");
   }
 
-  const parsed = profileFormSchema.safeParse({
+  const parsed = identitySchema.safeParse({
     firstName: formData.get("firstName"),
     lastName: formData.get("lastName"),
     phone: formData.get("phone"),
-    location: formData.get("location"),
-    targetRoles: formData.get("targetRoles"),
-    targetCountries: formData.get("targetCountries"),
-    skills: formData.get("skills"),
-    languages: formData.get("languages")
+    location: formData.get("location")
   });
 
   if (!parsed.success) {
-    return {
-      status: "error",
-      message: "Certains champs sont invalides ou trop longs."
-    };
+    return { status: "error", message: "Certains champs sont invalides ou trop longs." };
   }
 
   await updateUserProfile(user.id, parsed.data);
-  revalidatePath("/compte");
+  revalidatePath("/compte/profil");
 
-  return {
-    status: "success",
-    message: "Profil mis à jour."
-  };
+  return { status: "success", message: "Profil mis à jour." };
+}
+
+/** Onglet « Recherche » : enregistre les préférences (rôles & pays visés). */
+export async function updatePreferences(
+  _state: ProfileActionState,
+  formData: FormData
+): Promise<ProfileActionState> {
+  const user = await getCurrentUser();
+
+  if (!user) {
+    redirect("/connexion");
+  }
+
+  const parsed = preferencesSchema.safeParse({
+    targetRoles: formData.get("targetRoles"),
+    targetCountries: formData.get("targetCountries")
+  });
+
+  if (!parsed.success) {
+    return { status: "error", message: "Certains champs sont invalides ou trop longs." };
+  }
+
+  await updateUserProfile(user.id, parsed.data);
+  revalidatePath("/compte/recherche");
+
+  return { status: "success", message: "Préférences enregistrées." };
 }

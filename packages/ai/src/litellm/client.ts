@@ -65,6 +65,25 @@ async function postLiteLlmJson({ path, body }: LiteLlmRequestOptions): Promise<u
   return response.json();
 }
 
+/**
+ * Isole l'objet JSON d'une réponse de chat completion, même si le modèle l'a
+ * entouré de texte ou de balises Markdown malgré `response_format: json_object`.
+ */
+export function extractJsonObject(text: string): string {
+  const trimmed = text.trim();
+  if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+    return trimmed;
+  }
+
+  const firstBrace = trimmed.indexOf("{");
+  const lastBrace = trimmed.lastIndexOf("}");
+  if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
+    throw new Error("LiteLLM n'a pas renvoyé un objet JSON exploitable.");
+  }
+
+  return trimmed.slice(firstBrace, lastBrace + 1);
+}
+
 export async function createChatCompletion(body: Record<string, unknown>): Promise<string> {
   const parsed = chatResponseSchema.parse(
     await postLiteLlmJson({

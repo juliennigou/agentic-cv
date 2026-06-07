@@ -11,6 +11,9 @@
     "lint": "tsc -p tsconfig.json --noEmit",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
+  "dependencies": {
+    "unpdf": "^0.12.1"
+  },
   "devDependencies": {
     "typescript": "^5.7.2"
   }

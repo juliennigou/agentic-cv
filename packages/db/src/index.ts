@@ -12,9 +12,11 @@ export {
 } from "./repositories/job-offer-structuring-repository";
 export {
   searchJobOffers,
+  debugSearchJobOffers,
   listActiveOfferCountries,
   type SearchJobOffersParams,
   type JobOfferSearchResult,
+  type JobOfferSearchDebugResult,
   type OfferCountry
 } from "./repositories/job-offer-search-repository";
 export {
@@ -26,10 +28,19 @@ export {
 export {
   getOrCreateUserProfile,
   updateUserProfile,
+  saveUserResume,
   type UserProfileDetail,
   type UserProfileInput,
-  type UserProfileUpdateInput
+  type UserProfileUpdateInput,
+  type SaveResumeInput
 } from "./repositories/user-profile-repository";
+export {
+  createUserDocument,
+  listUserDocuments,
+  getLatestBaseResume,
+  type CreateUserDocumentInput,
+  type UserDocumentDetail
+} from "./repositories/user-document-repository";
 export {
   acquireScrapeLock,
   completeScrapeRun,

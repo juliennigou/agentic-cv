@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { createChatCompletion, isLiteLlmConfigured } from "../litellm/client";
+import { createChatCompletion, extractJsonObject, isLiteLlmConfigured } from "../litellm/client";
 
 const DEFAULT_MODEL = "deepseek/deepseek-chat";
 
@@ -69,21 +69,6 @@ const structuredResponseSchema = z.object({
     })
   )
 });
-
-function extractJsonObject(text: string): string {
-  const trimmed = text.trim();
-  if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
-    return trimmed;
-  }
-
-  const firstBrace = trimmed.indexOf("{");
-  const lastBrace = trimmed.lastIndexOf("}");
-  if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
-    throw new Error("LiteLLM n'a pas renvoyé un objet JSON exploitable.");
-  }
-
-  return trimmed.slice(firstBrace, lastBrace + 1);
-}
 
 /**
  * Structure un lot d'offres en un seul appel de chat completion.

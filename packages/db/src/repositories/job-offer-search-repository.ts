@@ -24,7 +24,7 @@ const CANDIDATES = 40;
 const RECENCY_POOL = 1000;
 const WEIGHT_LEXICAL = 1.0;
 const WEIGHT_SEMANTIC = 1.0;
-const WEIGHT_RECENCY = 0.3;
+const WEIGHT_RECENCY = 0.05;
 const DEFAULT_PAGE_SIZE = 50;
 
 const num = (n: number) => Prisma.raw(n.toString());
@@ -54,6 +54,16 @@ export type JobOfferSearchResult = {
   durationMonths: number | null;
   description: string;
   publishedAt: Date | null;
+};
+
+export type JobOfferSearchDebugResult = JobOfferSearchResult & {
+  lexicalRank: bigint | null;
+  semanticRank: bigint | null;
+  recencyRank: bigint | null;
+  lexicalScore: number;
+  semanticScore: number;
+  recencyScore: number;
+  totalScore: number;
 };
 
 const SELECT_FIELDS = Prisma.sql`
@@ -99,27 +109,107 @@ function buildFilter(params: SearchJobOffersParams): Prisma.Sql {
 export async function searchJobOffers(
   params: SearchJobOffersParams
 ): Promise<JobOfferSearchResult[]> {
+  const query = params.query?.trim() ?? "";
+
+  if (query.length === 0) {
+    return searchRecentJobOffers(params);
+  }
+
+  const queryParts = buildSearchQuery(params);
+  return prisma.$queryRaw<JobOfferSearchResult[]>(Prisma.sql`
+    WITH ${Prisma.join(queryParts.ctes, ", ")}
+    SELECT ${SELECT_FIELDS}
+    FROM filtered f
+    ${Prisma.join(queryParts.joins, " ")}
+    WHERE ${Prisma.join(queryParts.matchConds, " OR ")}
+    ORDER BY (${Prisma.join(queryParts.scoreTerms, " + ")}) DESC, f.published_at DESC NULLS LAST
+    LIMIT ${queryParts.limit} OFFSET ${queryParts.offset}
+  `);
+}
+
+export async function debugSearchJobOffers(
+  params: SearchJobOffersParams
+): Promise<JobOfferSearchDebugResult[]> {
   const limit = params.limit ?? DEFAULT_PAGE_SIZE;
   const offset = params.offset ?? 0;
   const query = params.query?.trim() ?? "";
-  const where = buildFilter(params);
 
-  // Mode « parcourir » : pas de texte → tri par date sur le sous-ensemble filtré.
   if (query.length === 0) {
-    return prisma.$queryRaw<JobOfferSearchResult[]>(Prisma.sql`
-      WITH filtered AS (SELECT * FROM job_offers WHERE ${where})
-      SELECT ${SELECT_FIELDS}
+    return prisma.$queryRaw<JobOfferSearchDebugResult[]>(Prisma.sql`
+      WITH filtered AS (SELECT * FROM job_offers WHERE ${buildFilter(params)})
+      SELECT ${SELECT_FIELDS},
+        NULL::bigint AS "lexicalRank",
+        NULL::bigint AS "semanticRank",
+        row_number() OVER (ORDER BY f.published_at DESC NULLS LAST) AS "recencyRank",
+        0::float8 AS "lexicalScore",
+        0::float8 AS "semanticScore",
+        (${num(WEIGHT_RECENCY)} * (1.0 / (${num(RRF_K)} + row_number() OVER (ORDER BY f.published_at DESC NULLS LAST))))::float8 AS "recencyScore",
+        (${num(WEIGHT_RECENCY)} * (1.0 / (${num(RRF_K)} + row_number() OVER (ORDER BY f.published_at DESC NULLS LAST))))::float8 AS "totalScore"
       FROM filtered f
       ORDER BY f.published_at DESC NULLS LAST
       LIMIT ${limit} OFFSET ${offset}
     `);
   }
 
+  const queryParts = buildSearchQuery(params);
+
+  return prisma.$queryRaw<JobOfferSearchDebugResult[]>(Prisma.sql`
+    WITH ${Prisma.join(queryParts.ctes, ", ")}
+    SELECT ${SELECT_FIELDS},
+      l.rank AS "lexicalRank",
+      ${queryParts.semanticRankSelect},
+      r.rank AS "recencyRank",
+      (${num(WEIGHT_LEXICAL)} * coalesce(1.0 / (${num(RRF_K)} + l.rank), 0))::float8 AS "lexicalScore",
+      ${queryParts.semanticScoreSelect},
+      (${num(WEIGHT_RECENCY)} * coalesce(1.0 / (${num(RRF_K)} + r.rank), 0))::float8 AS "recencyScore",
+      (${Prisma.join(queryParts.scoreTerms, " + ")})::float8 AS "totalScore"
+    FROM filtered f
+    ${Prisma.join(queryParts.joins, " ")}
+    WHERE ${Prisma.join(queryParts.matchConds, " OR ")}
+    ORDER BY (${Prisma.join(queryParts.scoreTerms, " + ")}) DESC, f.published_at DESC NULLS LAST
+    LIMIT ${queryParts.limit} OFFSET ${queryParts.offset}
+  `);
+}
+
+function searchRecentJobOffers(params: SearchJobOffersParams): Promise<JobOfferSearchResult[]> {
+  const limit = params.limit ?? DEFAULT_PAGE_SIZE;
+  const offset = params.offset ?? 0;
+  const where = buildFilter(params);
+
+  // Mode « parcourir » : pas de texte → tri par date sur le sous-ensemble filtré.
+  return prisma.$queryRaw<JobOfferSearchResult[]>(Prisma.sql`
+    WITH filtered AS (SELECT * FROM job_offers WHERE ${where})
+    SELECT ${SELECT_FIELDS}
+    FROM filtered f
+    ORDER BY f.published_at DESC NULLS LAST
+    LIMIT ${limit} OFFSET ${offset}
+  `);
+}
+
+type SearchQueryParts = {
+  ctes: Prisma.Sql[];
+  joins: Prisma.Sql[];
+  scoreTerms: Prisma.Sql[];
+  matchConds: Prisma.Sql[];
+  semanticRankSelect: Prisma.Sql;
+  semanticScoreSelect: Prisma.Sql;
+  limit: number;
+  offset: number;
+};
+
+function buildSearchQuery(params: SearchJobOffersParams): SearchQueryParts {
+  const limit = params.limit ?? DEFAULT_PAGE_SIZE;
+  const offset = params.offset ?? 0;
+  const query = params.query?.trim() ?? "";
+  const where = buildFilter(params);
+
   // Mode recherche : RRF lexical (+ sémantique si vecteur) (+ récence faible).
   const ctes: Prisma.Sql[] = [Prisma.sql`filtered AS (SELECT * FROM job_offers WHERE ${where})`];
   const joins: Prisma.Sql[] = [];
   const scoreTerms: Prisma.Sql[] = [];
   const matchConds: Prisma.Sql[] = [];
+  let semanticRankSelect = Prisma.sql`NULL::bigint AS "semanticRank"`;
+  let semanticScoreSelect = Prisma.sql`0::float8 AS "semanticScore"`;
 
   // Lexical (toujours présent en mode recherche).
   ctes.push(Prisma.sql`
@@ -150,6 +240,8 @@ export async function searchJobOffers(
       )
     `);
     joins.push(Prisma.sql`LEFT JOIN semantic s ON s.id = f.id`);
+    semanticRankSelect = Prisma.sql`s.rank AS "semanticRank"`;
+    semanticScoreSelect = Prisma.sql`${num(WEIGHT_SEMANTIC)} * coalesce(1.0 / (${num(RRF_K)} + s.rank), 0)::float8 AS "semanticScore"`;
     scoreTerms.push(
       Prisma.sql`${num(WEIGHT_SEMANTIC)} * coalesce(1.0 / (${num(RRF_K)} + s.rank), 0)`
     );
@@ -168,13 +260,14 @@ export async function searchJobOffers(
   joins.push(Prisma.sql`LEFT JOIN recency r ON r.id = f.id`);
   scoreTerms.push(Prisma.sql`${num(WEIGHT_RECENCY)} * coalesce(1.0 / (${num(RRF_K)} + r.rank), 0)`);
 
-  return prisma.$queryRaw<JobOfferSearchResult[]>(Prisma.sql`
-    WITH ${Prisma.join(ctes, ", ")}
-    SELECT ${SELECT_FIELDS}
-    FROM filtered f
-    ${Prisma.join(joins, " ")}
-    WHERE ${Prisma.join(matchConds, " OR ")}
-    ORDER BY (${Prisma.join(scoreTerms, " + ")}) DESC, f.published_at DESC NULLS LAST
-    LIMIT ${limit} OFFSET ${offset}
-  `);
+  return {
+    ctes,
+    joins,
+    scoreTerms,
+    matchConds,
+    semanticRankSelect,
+    semanticScoreSelect,
+    limit,
+    offset
+  };
 }

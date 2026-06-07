@@ -21,15 +21,19 @@ function listFromTextarea(maxItems: number) {
     );
 }
 
-export const profileFormSchema = z.object({
+/** Onglet « Profil » : identité & contact. */
+export const identitySchema = z.object({
   firstName: optionalText(80),
   lastName: optionalText(80),
   phone: optionalText(40),
-  location: optionalText(120),
-  targetRoles: listFromTextarea(20),
-  targetCountries: listFromTextarea(30),
-  skills: listFromTextarea(80),
-  languages: listFromTextarea(30)
+  location: optionalText(120)
 });
 
-export type ProfileFormData = z.infer<typeof profileFormSchema>;
+/** Onglet « Recherche » : préférences pour les futures alertes. */
+export const preferencesSchema = z.object({
+  targetRoles: listFromTextarea(20),
+  targetCountries: listFromTextarea(30)
+});
+
+export type IdentityFormData = z.infer<typeof identitySchema>;
+export type PreferencesFormData = z.infer<typeof preferencesSchema>;
