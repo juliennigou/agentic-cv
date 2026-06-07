@@ -43,7 +43,9 @@ export async function runStructureJobOffers(
 
   if (!isStructuringConfigured()) {
     result.status = "skipped";
-    result.errors.push("LITELLM_BASE_URL ou LITELLM_API_KEY absent ; passe de structuration ignorée.");
+    result.errors.push(
+      "LITELLM_BASE_URL ou LITELLM_API_KEY absent ; passe de structuration ignorée."
+    );
     return result;
   }
 
