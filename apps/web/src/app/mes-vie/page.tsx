@@ -15,6 +15,7 @@ import {
   TableHeader,
   TableRow
 } from "@/components/ui/table";
+import { prepareApplication } from "@/features/applications/actions";
 import { getCurrentUser } from "@/features/auth/current-user";
 import { toggleFavoriteJob } from "@/features/offers/actions";
 import {
@@ -85,6 +86,33 @@ export default async function MesViePage({ searchParams }: MesViePageProps) {
         />
       )}
     </main>
+  );
+}
+
+function PrepareApplicationButton({
+  offerId,
+  returnTo,
+  validated,
+  fullWidth = false
+}: {
+  offerId: string;
+  returnTo: string;
+  validated: boolean;
+  fullWidth?: boolean;
+}) {
+  return (
+    <form action={prepareApplication} className={fullWidth ? "w-full" : undefined}>
+      <input type="hidden" name="jobOfferId" value={offerId} />
+      <input type="hidden" name="returnTo" value={returnTo} />
+      <Button
+        type="submit"
+        variant="outline"
+        size="sm"
+        className={fullWidth ? "w-full bg-card" : "bg-card"}
+      >
+        {validated ? "Revoir la candidature" : "Préparer ma candidature"}
+      </Button>
+    </form>
   );
 }
 
@@ -178,11 +206,18 @@ function KanbanCard({ tracked, returnTo }: { tracked: TrackedJobOffer; returnTo:
 
       <div className="flex flex-wrap gap-2">
         <Badge variant="accent">{formatOfferStatus(status)}</Badge>
+        {tracked.applicationValidatedAt ? <Badge variant="accent">Validée</Badge> : null}
         {location ? <Badge>{location}</Badge> : null}
         {duration ? <Badge>{duration}</Badge> : null}
       </div>
 
       <StatusSelect offerId={offer.id} status={status} returnTo={returnTo} />
+      <PrepareApplicationButton
+        offerId={offer.id}
+        returnTo={returnTo}
+        validated={Boolean(tracked.applicationValidatedAt)}
+        fullWidth
+      />
     </Card>
   );
 }
@@ -237,7 +272,14 @@ function OffersTable({
                 {published ?? "—"}
               </TableCell>
               <TableCell className="text-right">
-                <FavoriteRemoveButton offerId={offer.id} returnTo={returnTo} />
+                <div className="flex items-center justify-end gap-2">
+                  <PrepareApplicationButton
+                    offerId={offer.id}
+                    returnTo={returnTo}
+                    validated={Boolean(tracked.applicationValidatedAt)}
+                  />
+                  <FavoriteRemoveButton offerId={offer.id} returnTo={returnTo} />
+                </div>
               </TableCell>
             </TableRow>
           );

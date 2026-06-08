@@ -36,6 +36,18 @@ enum ApplicationStatus {
   accepted
 }
 
+enum ApplicationArtifactKind {
+  targeted_resume
+  cover_letter
+  recruiter_message
+}
+
+enum ApplicationArtifactStatus {
+  draft
+  pasted
+  validated
+}
+
 model UserProfile {
   id              String   @id @default(uuid()) @db.Uuid
   userId          String   @unique @map("user_id") @db.Uuid
@@ -173,18 +185,41 @@ model SavedJob {
 }
 
 model Application {
-  id         String            @id @default(uuid()) @db.Uuid
-  userId     String            @map("user_id") @db.Uuid
-  jobOfferId String            @map("job_offer_id") @db.Uuid
-  status     ApplicationStatus @default(unread)
-  notes      String?
-  appliedAt  DateTime?         @map("applied_at")
-  createdAt  DateTime          @default(now()) @map("created_at")
-  updatedAt  DateTime          @updatedAt @map("updated_at")
+  id                    String            @id @default(uuid()) @db.Uuid
+  userId                String            @map("user_id") @db.Uuid
+  jobOfferId            String            @map("job_offer_id") @db.Uuid
+  status                ApplicationStatus @default(unread)
+  notes                 String?
+  // URL de la conversation ChatGPT (ressaisie par l'utilisateur pour la rouvrir).
+  chatgptConversationUrl String?          @map("chatgpt_conversation_url")
+  // Horodatage de validation du dossier ; NULL = brouillon, sinon « validée ».
+  validatedAt           DateTime?         @map("validated_at")
+  appliedAt             DateTime?         @map("applied_at")
+  createdAt             DateTime          @default(now()) @map("created_at")
+  updatedAt             DateTime          @updatedAt @map("updated_at")
 
-  user     UserProfile @relation(fields: [userId], references: [userId], onDelete: Cascade)
-  jobOffer JobOffer    @relation(fields: [jobOfferId], references: [id], onDelete: Cascade)
+  user      UserProfile           @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  jobOffer  JobOffer              @relation(fields: [jobOfferId], references: [id], onDelete: Cascade)
+  artifacts ApplicationArtifact[]
 
   @@unique([userId, jobOfferId])
   @@map("applications")
+}
+
+model ApplicationArtifact {
+  id            String                    @id @default(uuid()) @db.Uuid
+  applicationId String                    @map("application_id") @db.Uuid
+  kind          ApplicationArtifactKind
+  // Contenu texte recollé depuis ChatGPT (CV ciblé / lettre / message).
+  contentText   String?                   @map("content_text")
+  status        ApplicationArtifactStatus @default(draft)
+  validatedAt   DateTime?                 @map("validated_at")
+  createdAt     DateTime                  @default(now()) @map("created_at")
+  updatedAt     DateTime                  @updatedAt @map("updated_at")
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@unique([applicationId, kind])
+  @@index([applicationId])
+  @@map("application_artifacts")
 }

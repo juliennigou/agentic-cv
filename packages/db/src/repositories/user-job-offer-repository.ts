@@ -26,6 +26,7 @@ export type UserJobOfferState = {
 export type TrackedJobOffer = {
   favoriteCreatedAt: Date;
   applicationStatus: ApplicationStatus | null;
+  applicationValidatedAt: Date | null;
   offer: {
     id: string;
     title: string;
@@ -126,7 +127,8 @@ export async function listUserFavoriteJobOffers(userId: string): Promise<Tracked
     },
     select: {
       jobOfferId: true,
-      status: true
+      status: true,
+      validatedAt: true
     }
   });
 
@@ -134,11 +136,15 @@ export async function listUserFavoriteJobOffers(userId: string): Promise<Tracked
     applications.map((application) => [application.jobOfferId, application])
   );
 
-  return savedJobs.map((savedJob) => ({
-    favoriteCreatedAt: savedJob.createdAt,
-    applicationStatus: applicationByOfferId.get(savedJob.jobOfferId)?.status ?? null,
-    offer: savedJob.jobOffer
-  }));
+  return savedJobs.map((savedJob) => {
+    const application = applicationByOfferId.get(savedJob.jobOfferId);
+    return {
+      favoriteCreatedAt: savedJob.createdAt,
+      applicationStatus: application?.status ?? null,
+      applicationValidatedAt: application?.validatedAt ?? null,
+      offer: savedJob.jobOffer
+    };
+  });
 }
 
 export async function saveJobForUser(userId: string, jobOfferId: string): Promise<void> {

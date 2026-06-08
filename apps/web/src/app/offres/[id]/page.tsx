@@ -8,7 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { getCurrentUser } from "@/features/auth/current-user";
+import { prepareApplication } from "@/features/applications/actions";
 import { toggleFavoriteJob } from "@/features/offers/actions";
+import { OfferRichText } from "@/features/offers/offer-rich-text";
 import { formatDate, formatDuration, formatLocation } from "@/features/offers/offer-view";
 import { StatusSelect } from "@/features/offers/status-select";
 import { formatOfferStatus } from "@/features/offers/status";
@@ -64,12 +66,12 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
         <article className="prose">
           <section>
             <h2>Description</h2>
-            <p>{offer.description}</p>
+            <OfferRichText text={offer.description} />
           </section>
           {offer.requirements ? (
             <section>
               <h2>Profil recherché</h2>
-              <p>{offer.requirements}</p>
+              <OfferRichText text={offer.requirements} />
             </section>
           ) : null}
           {offer.companyDescription ? (
@@ -80,7 +82,7 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
                   <Badge variant="accent">Résumé IA</Badge>
                 ) : null}
               </div>
-              <p>{offer.companyDescription}</p>
+              <OfferRichText text={offer.companyDescription} />
               {offer.companyDescriptionGenerated ? (
                 <p className="mt-1 text-xs italic text-muted-foreground">
                   Présentation générée automatiquement à partir du nom de l'entreprise, à titre
@@ -175,9 +177,13 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
               Voir l'offre originale ↗
             </a>
           </Button>
-          <Button variant="ghost" type="button" disabled className="w-full">
-            Préparer ma candidature
-          </Button>
+          <form action={prepareApplication}>
+            <input type="hidden" name="jobOfferId" value={offer.id} />
+            <input type="hidden" name="returnTo" value={`/offres/${offer.id}`} />
+            <Button type="submit" variant="primary" className="w-full">
+              Préparer ma candidature
+            </Button>
+          </form>
         </Card>
       </div>
     </main>
