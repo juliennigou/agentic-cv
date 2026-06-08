@@ -57,3 +57,14 @@ export {
   createScrapeRun,
   releaseScrapeLock
 } from "./repositories/scrape-run-repository";
+export {
+  APPLICATION_ARTIFACT_KINDS,
+  createOrGetApplicationWorkspace,
+  getApplicationWorkspace,
+  saveApplicationDraft,
+  validateApplicationWorkspace,
+  type ApplicationWorkspace,
+  type ApplicationWorkspaceArtifact,
+  type SaveApplicationDraftInput,
+  type ValidateApplicationWorkspaceInput
+} from "./repositories/application-workspace-repository";

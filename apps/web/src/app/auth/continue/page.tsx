@@ -1,4 +1,4 @@
-import { saveJobForUser } from "@agentic-cv/db";
+import { createOrGetApplicationWorkspace, saveJobForUser } from "@agentic-cv/db";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
@@ -10,11 +10,12 @@ export const dynamic = "force-dynamic";
 type AuthContinuePageProps = {
   searchParams: Promise<{
     favoriteJobOfferId?: string;
+    prepareJobOfferId?: string;
     returnTo?: string;
   }>;
 };
 
-const favoriteJobOfferIdSchema = z.string().uuid();
+const jobOfferIdSchema = z.string().uuid();
 
 export default async function AuthContinuePage({ searchParams }: AuthContinuePageProps) {
   const resolvedSearchParams = await searchParams;
@@ -23,10 +24,20 @@ export default async function AuthContinuePage({ searchParams }: AuthContinuePag
   if (user) {
     const returnTo = getSafeNextPath(resolvedSearchParams.returnTo);
 
-    const favoriteJobOfferIdResult = favoriteJobOfferIdSchema.safeParse(
+    const prepareJobOfferIdResult = jobOfferIdSchema.safeParse(
+      resolvedSearchParams.prepareJobOfferId
+    );
+    if (prepareJobOfferIdResult.success) {
+      const applicationId = await createOrGetApplicationWorkspace({
+        userId: user.id,
+        jobOfferId: prepareJobOfferIdResult.data
+      });
+      redirect(`/candidatures/${applicationId}`);
+    }
+
+    const favoriteJobOfferIdResult = jobOfferIdSchema.safeParse(
       resolvedSearchParams.favoriteJobOfferId
     );
-
     if (favoriteJobOfferIdResult.success) {
       await saveJobForUser(user.id, favoriteJobOfferIdResult.data);
       redirect(returnTo);
