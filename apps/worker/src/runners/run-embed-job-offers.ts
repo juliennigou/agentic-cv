@@ -23,14 +23,36 @@ export type EmbedJobOffersResult = {
 
 const DEFAULT_BATCH_SIZE = 100;
 
-/** Texte indexé pour une offre : titre, entreprise, localisation, description. */
+type EmbeddingField = {
+  label: string;
+  value: string | null | undefined;
+};
+
+function formatEmbeddingField({ label, value }: EmbeddingField): string | null {
+  const trimmed = value?.trim();
+  return trimmed && trimmed.length > 0 ? `${label}: ${trimmed}` : null;
+}
+
+/**
+ * Texte indexé pour une offre : mission, prérequis et métadonnées utiles au matching.
+ * La présentation entreprise reste exclue pour ne pas noyer le signal métier.
+ */
 function buildOfferEmbeddingText(offer: OfferNeedingEmbedding): string {
   const location = [offer.city, offer.country].filter(Boolean).join(" ");
+  const duration = offer.durationMonths !== null ? `${offer.durationMonths} mois` : null;
 
-  return [offer.title, offer.companyName, location, offer.description]
-    .map((part) => part?.trim())
-    .filter((part): part is string => Boolean(part && part.length > 0))
-    .join(". ");
+  return [
+    { label: "Titre", value: offer.title },
+    { label: "Entreprise", value: offer.companyName },
+    { label: "Localisation", value: location },
+    { label: "Contrat", value: offer.contractType },
+    { label: "Durée", value: duration },
+    { label: "Mission", value: offer.description },
+    { label: "Prérequis", value: offer.requirements }
+  ]
+    .map(formatEmbeddingField)
+    .filter((part): part is string => part !== null)
+    .join("\n");
 }
 
 /**

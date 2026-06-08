@@ -2,8 +2,8 @@ import { createEmbeddings, isLiteLlmConfigured } from "../litellm/client";
 
 const DEFAULT_MODEL = "openai/text-embedding-3-small";
 
-/** Dimension MRL retenue côté DB (`vector(768)`). */
-export const EMBEDDING_DIMENSION = 768;
+/** Dimension native de `text-embedding-3-small`, alignée avec la colonne `vector(1536)`. */
+export const EMBEDDING_DIMENSION = 1536;
 
 /**
  * `RETRIEVAL_DOCUMENT` pour le contenu indexé (offres),

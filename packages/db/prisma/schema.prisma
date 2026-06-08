@@ -108,8 +108,8 @@ model JobOffer {
   // Horodatage de la passe de structuration LLM (sépare mission ↔ entreprise).
   // NULL = à (re)structurer ; remis à NULL quand le contenu change.
   structuredAt       DateTime?                   @map("structured_at")
-  // Embedding sémantique (768 dim) ; accès uniquement via $queryRaw/$executeRaw.
-  embedding          Unsupported("vector(768)")?
+  // Embedding sémantique (1536 dim) ; accès uniquement via $queryRaw/$executeRaw.
+  embedding          Unsupported("vector(1536)")?
   // Vecteur full-text (français) titre + mission + entreprise. Colonne GENERATED
   // ALWAYS AS … STORED (cf. migration 20260605230000_job_offer_search) : Prisma ne
   // sait pas exprimer le GENERATED, on la déclare en Unsupported pour aligner le
