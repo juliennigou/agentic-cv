@@ -1,0 +1,10 @@
+#!/bin/sh
+set -eu
+
+cd "$(git rev-parse --show-toplevel)"
+
+echo "[pre-commit] pnpm format:check"
+pnpm format:check
+
+echo "[pre-commit] pnpm lint"
+pnpm lint

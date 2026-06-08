@@ -5,8 +5,11 @@
   "packageManager": "pnpm@9.15.4",
   "scripts": {
     "build": "turbo build",
+    "ci:local": "pnpm db:generate && pnpm typecheck && pnpm lint && pnpm format:check",
     "debug:search": "pnpm --filter @agentic-cv/worker debug:search",
     "dev": "turbo dev",
+    "hooks:install": "git config core.hooksPath .githooks",
+    "hooks:uninstall": "git config --unset core.hooksPath",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
