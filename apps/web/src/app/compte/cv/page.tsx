@@ -2,6 +2,8 @@ import { getLatestBaseResume, getOrCreateUserProfile } from "@agentic-cv/db";
 import { createEmptyResume, resumeSchema, type Resume } from "@agentic-cv/shared";
 import { redirect } from "next/navigation";
 
+import { Eyebrow } from "@/components/eyebrow";
+import { Card } from "@/components/ui/card";
 import { CvUpload } from "@/features/account/cv-upload";
 import { getCurrentUser } from "@/features/auth/current-user";
 import { createUserDocumentSignedUrl } from "@/lib/supabase/admin";
@@ -36,15 +38,13 @@ export default async function CvTabPage() {
     : null;
 
   return (
-    <section className="account-section">
-      <div className="section-title-row">
-        <div>
-          <span className="eyebrow">Mon CV</span>
-          <h2>CV &amp; parcours</h2>
-        </div>
+    <Card className="grid gap-5 p-5">
+      <div className="grid gap-1">
+        <Eyebrow>Mon CV</Eyebrow>
+        <h2 className="font-display text-xl font-semibold tracking-[-0.01em]">CV &amp; parcours</h2>
       </div>
 
-      <p className="muted-text">
+      <p className="text-sm leading-snug text-muted-foreground">
         Dépose ton CV (PDF) : on en extrait automatiquement formation, expériences, projets, langues
         et compétences. Vérifie puis enregistre — tu peux aussi tout saisir à la main.
       </p>
@@ -54,6 +54,6 @@ export default async function CvTabPage() {
         hasStoredResume={storedResume !== null}
         storedFile={storedFile}
       />
-    </section>
+    </Card>
   );
 }

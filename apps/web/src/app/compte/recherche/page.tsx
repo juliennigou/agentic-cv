@@ -1,6 +1,8 @@
 import { getOrCreateUserProfile } from "@agentic-cv/db";
 import { redirect } from "next/navigation";
 
+import { Eyebrow } from "@/components/eyebrow";
+import { Card } from "@/components/ui/card";
 import { PreferencesForm } from "@/features/account/preferences-form";
 import { getCurrentUser } from "@/features/auth/current-user";
 
@@ -16,19 +18,19 @@ export default async function RechercheTabPage() {
   const profile = await getOrCreateUserProfile({ userId: user.id });
 
   return (
-    <section className="account-section">
-      <div className="section-title-row">
-        <div>
-          <span className="eyebrow">Recherche</span>
-          <h2>Préférences d'offres</h2>
-        </div>
+    <Card className="grid gap-5 p-5">
+      <div className="grid gap-1">
+        <Eyebrow>Recherche</Eyebrow>
+        <h2 className="font-display text-xl font-semibold tracking-[-0.01em]">
+          Préférences d'offres
+        </h2>
       </div>
 
-      <p className="muted-text">
+      <p className="text-sm leading-snug text-muted-foreground">
         Indique les rôles et pays qui t'intéressent pour cibler les offres pertinentes.
       </p>
 
       <PreferencesForm profile={profile} />
-    </section>
+    </Card>
   );
 }
