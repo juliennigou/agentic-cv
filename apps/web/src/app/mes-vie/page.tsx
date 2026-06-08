@@ -24,11 +24,7 @@ import {
   type OfferApplicationStatus
 } from "@/features/offers/offer-view";
 import { StatusSelect } from "@/features/offers/status-select";
-import {
-  formatOfferStatus,
-  groupForStatus,
-  OFFER_STATUS_GROUPS
-} from "@/features/offers/status";
+import { formatOfferStatus, groupForStatus, OFFER_STATUS_GROUPS } from "@/features/offers/status";
 import { VieViewTabs } from "@/features/offers/vie-view-tabs";
 
 export const dynamic = "force-dynamic";

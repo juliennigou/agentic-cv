@@ -17,7 +17,9 @@ export default async function AccountLayout({ children }: { children: ReactNode 
 
         <section className="grid gap-5 pb-2 pt-10">
           <Eyebrow>Configuration requise</Eyebrow>
-          <h1 className="font-display text-2xl font-semibold tracking-[-0.01em]">Compte candidat</h1>
+          <h1 className="font-display text-2xl font-semibold tracking-[-0.01em]">
+            Compte candidat
+          </h1>
           <p className="max-w-[64ch] text-lg leading-normal text-muted-foreground">
             L'espace compte est prêt côté code, mais Supabase Auth doit être configuré avant
             d'autoriser les connexions.

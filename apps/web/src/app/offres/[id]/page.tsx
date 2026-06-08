@@ -76,7 +76,9 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
             <section>
               <div className="flex flex-wrap items-baseline gap-2">
                 <h2>À propos de l'entreprise</h2>
-                {offer.companyDescriptionGenerated ? <Badge variant="accent">Résumé IA</Badge> : null}
+                {offer.companyDescriptionGenerated ? (
+                  <Badge variant="accent">Résumé IA</Badge>
+                ) : null}
               </div>
               <p>{offer.companyDescription}</p>
               {offer.companyDescriptionGenerated ? (

@@ -40,10 +40,7 @@ export function StatusSelect({ offerId, status, returnTo }: StatusSelectProps) {
       <input type="hidden" name="jobOfferId" value={offerId} />
       <input type="hidden" name="returnTo" value={returnTo} />
       <input type="hidden" name="status" value={value} />
-      <Select
-        value={value}
-        onValueChange={(next) => setValue(next as OfferApplicationStatus)}
-      >
+      <Select value={value} onValueChange={(next) => setValue(next as OfferApplicationStatus)}>
         <SelectTrigger className="h-9" aria-label="Changer le statut de candidature">
           <SelectValue />
         </SelectTrigger>
