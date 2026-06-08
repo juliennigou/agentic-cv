@@ -78,6 +78,8 @@ Toujours via **pnpm** (jamais npm/yarn). `pnpm@9.15.4`.
 
 ```bash
 pnpm install                  # corepack enable d'abord si besoin
+pnpm hooks:install            # active les hooks Git versionnés (.githooks)
+pnpm ci:local                 # vérification locale miroir du CI
 pnpm db:generate              # régénère le client Prisma (requis après edit du schema)
 pnpm typecheck                # OBLIGATOIRE avant de finir
 pnpm lint                     # ESLint (qualité/bugs) ; --fix dispo via lint:fix

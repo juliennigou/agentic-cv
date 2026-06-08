@@ -36,8 +36,20 @@ docs/
 corepack enable
 corepack prepare pnpm@9.15.4 --activate
 pnpm install
+pnpm hooks:install
 pnpm db:generate
 pnpm dev
+```
+
+Les hooks Git versionnes lancent les controles avant commit/push:
+
+- `pre-commit`: `pnpm format:check` puis `pnpm lint`
+- `pre-push`: `pnpm ci:local` (`db:generate`, `typecheck`, `lint`, `format:check`)
+
+Pour rejouer le CI localement sans pousser:
+
+```bash
+pnpm ci:local
 ```
 
 Le premier jalon est le scraper Business France et la pipeline ETL:
