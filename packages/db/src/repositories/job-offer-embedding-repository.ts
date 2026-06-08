@@ -13,7 +13,10 @@ export type OfferNeedingEmbedding = {
   companyName: string | null;
   city: string | null;
   country: string | null;
+  contractType: string | null;
+  durationMonths: number | null;
   description: string;
+  requirements: string | null;
 };
 
 /** Offres actives en attente d'embedding (sert au flux quotidien comme au backfill). */
@@ -25,7 +28,10 @@ export async function listOffersNeedingEmbedding(limit: number): Promise<OfferNe
       company_name AS "companyName",
       city,
       country,
-      description
+      contract_type AS "contractType",
+      duration_months AS "durationMonths",
+      description,
+      requirements
     FROM job_offers
     WHERE embedding IS NULL
       AND is_active = true

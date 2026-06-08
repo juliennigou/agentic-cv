@@ -18,7 +18,7 @@ function normalize(text: string): string {
   return text.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
-/** Vecteur de requête (768 dim) ou `null` si indisponible. */
+/** Vecteur de requête ou `null` si indisponible. */
 export async function embedQuery(text: string): Promise<number[] | null> {
   const key = normalize(text);
   if (key.length === 0 || !isEmbeddingConfigured()) {

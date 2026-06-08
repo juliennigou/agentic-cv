@@ -168,7 +168,9 @@ export function ResumeReviewForm({ resume: initialResume }: ResumeReviewFormProp
             <Field label="Poste">
               <Input
                 value={item.title}
-                onChange={(event) => updateList("experiences", index, { title: event.target.value })}
+                onChange={(event) =>
+                  updateList("experiences", index, { title: event.target.value })
+                }
               />
             </Field>
             <Field label="Entreprise">
@@ -386,7 +388,9 @@ export function ResumeReviewForm({ resume: initialResume }: ResumeReviewFormProp
             <Field label="Langue">
               <Input
                 value={item.language}
-                onChange={(event) => updateList("languages", index, { language: event.target.value })}
+                onChange={(event) =>
+                  updateList("languages", index, { language: event.target.value })
+                }
               />
             </Field>
             <Field label="Niveau">

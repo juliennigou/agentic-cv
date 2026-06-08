@@ -101,7 +101,7 @@ Filtrer un package : `pnpm --filter @agentic-cv/<pkg> <script>`.
   `PrismaJobOfferRepository implements JobOfferRepository`).
 - Ne jamais éditer une migration déjà committée ; en créer une nouvelle.
 - **Colonnes que Prisma ne sait pas représenter** (types `Unsupported(...)` comme
-  `embedding vector(768)` / `fts tsvector`, colonnes `GENERATED ALWAYS AS … STORED`,
+  `embedding vector(1536)` / `fts tsvector`, colonnes `GENERATED ALWAYS AS … STORED`,
   index GIN/HNSW sur ces colonnes) : elles sont déclarées au mieux dans le schéma
   (`fts Unsupported("tsvector")?`) pour éviter un `DROP COLUMN`, mais Prisma ne peut
   pas exprimer le `GENERATED` ni les index sur colonnes `Unsupported`. `migrate dev`
