@@ -3,6 +3,14 @@
 import { usePathname, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+
 import { OfferCard } from "./offer-card";
 import type { OfferListItem } from "./offer-view";
 
@@ -33,20 +41,23 @@ export function OfferResults({
 
   return (
     <>
-      <div className="section-head">
-        <p className="count">
-          <strong>{offers.length}</strong> offre{offers.length > 1 ? "s" : ""} active
-          {offers.length > 1 ? "s" : ""}
+      <div className="mb-4 mt-8 flex items-baseline justify-between gap-4">
+        <p className="whitespace-nowrap font-mono text-sm tracking-[0.02em] text-muted-foreground">
+          <strong className="text-foreground">{offers.length}</strong> offre
+          {offers.length > 1 ? "s" : ""} active{offers.length > 1 ? "s" : ""}
         </p>
-        <select
-          className="field"
-          aria-label="Trier les offres affichées"
+        <Select
           value={sort}
-          onChange={(event) => setSort(event.currentTarget.value === "date" ? "date" : "relevance")}
+          onValueChange={(value) => setSort(value === "date" ? "date" : "relevance")}
         >
-          <option value="relevance">Pertinence</option>
-          <option value="date">Plus récentes</option>
-        </select>
+          <SelectTrigger className="w-auto min-w-[10rem]" aria-label="Trier les offres affichées">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="relevance">Pertinence</SelectItem>
+            <SelectItem value="date">Plus récentes</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <OfferList offers={sortedOffers} returnTo={returnTo} />
@@ -57,14 +68,14 @@ export function OfferResults({
 function OfferList({ offers, returnTo }: { offers: OfferListItem[]; returnTo: string }) {
   if (offers.length === 0) {
     return (
-      <div className="empty-state">
+      <div className="rounded-md border border-dashed border-[var(--border-strong)] bg-card p-6 leading-normal text-muted-foreground">
         Aucune offre ne correspond à ta recherche. Élargis les filtres ou modifie les mots-clés.
       </div>
     );
   }
 
   return (
-    <div className="offer-list">
+    <div className="grid gap-4">
       {offers.map((offer) => (
         <OfferCard key={offer.id} offer={offer} returnTo={returnTo} />
       ))}

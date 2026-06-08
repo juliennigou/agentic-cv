@@ -1,22 +1,35 @@
 import { listUserFavoriteJobOffers, type TrackedJobOffer } from "@agentic-cv/db";
+import { Star } from "lucide-react";
 import { redirect } from "next/navigation";
 
+import { Eyebrow } from "@/components/eyebrow";
 import { SiteHeader } from "@/components/site-header";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from "@/components/ui/table";
 import { getCurrentUser } from "@/features/auth/current-user";
-import { toggleFavoriteJob, updateJobApplicationStatus } from "@/features/offers/actions";
+import { toggleFavoriteJob } from "@/features/offers/actions";
 import {
   formatDate,
   formatDuration,
   formatLocation,
   type OfferApplicationStatus
 } from "@/features/offers/offer-view";
+import { StatusSelect } from "@/features/offers/status-select";
 import {
   formatOfferStatus,
   groupForStatus,
-  OFFER_STATUS_GROUPS,
-  OFFER_STATUS_LABELS,
-  TRACKED_OFFER_STATUSES
+  OFFER_STATUS_GROUPS
 } from "@/features/offers/status";
+import { VieViewTabs } from "@/features/offers/vie-view-tabs";
 
 export const dynamic = "force-dynamic";
 
@@ -48,53 +61,55 @@ export default async function MesViePage({ searchParams }: MesViePageProps) {
   const trackedOffers = await listUserFavoriteJobOffers(user.id);
 
   return (
-    <main className="page-shell">
+    <main className="mx-auto w-full max-w-[1120px] px-5 pb-16 pt-8">
       <SiteHeader active="mes-vie" />
 
-      <header className="account-head">
-        <span className="eyebrow">Suivi des candidatures</span>
-        <h1>Mes VIE</h1>
-        <span className="count">
-          <strong>{trackedOffers.length}</strong> offre{trackedOffers.length > 1 ? "s" : ""} suivie
-          {trackedOffers.length > 1 ? "s" : ""}
+      <header className="grid gap-2 pb-5 pt-2">
+        <Eyebrow>Suivi des candidatures</Eyebrow>
+        <h1 className="font-display text-2xl font-semibold tracking-[-0.01em]">Mes VIE</h1>
+        <span className="font-mono text-sm tracking-[0.02em] text-muted-foreground">
+          <strong className="text-foreground">{trackedOffers.length}</strong> offre
+          {trackedOffers.length > 1 ? "s" : ""} suivie{trackedOffers.length > 1 ? "s" : ""}
         </span>
       </header>
 
-      <div
-        className="view-toggle"
-        role="tablist"
-        aria-label="Mode d'affichage"
-        style={{ marginBottom: "var(--space-5)" }}
-      >
-        <a
-          className="view-toggle-option"
-          href="/mes-vie?vue=kanban"
-          role="tab"
-          aria-current={view === "kanban" ? "page" : undefined}
-        >
-          Kanban
-        </a>
-        <a
-          className="view-toggle-option"
-          href="/mes-vie?vue=table"
-          role="tab"
-          aria-current={view === "table" ? "page" : undefined}
-        >
-          Tableau
-        </a>
-      </div>
-
       {trackedOffers.length === 0 ? (
-        <div className="empty-state">
+        <div className="rounded-md border border-dashed border-[var(--border-strong)] bg-card p-6 leading-normal text-muted-foreground">
           Aucune offre suivie pour l'instant. Ajoute une offre à tes favoris depuis{" "}
-          <a href="/offres">la liste des offres</a> pour la retrouver ici.
+          <a className="text-[var(--accent)] hover:underline" href="/offres">
+            la liste des offres
+          </a>{" "}
+          pour la retrouver ici.
         </div>
-      ) : view === "kanban" ? (
-        <KanbanBoard trackedOffers={trackedOffers} returnTo={returnTo} />
       ) : (
-        <OffersTable trackedOffers={trackedOffers} returnTo={returnTo} />
+        <VieViewTabs
+          initialView={view}
+          kanban={<KanbanBoard trackedOffers={trackedOffers} returnTo={returnTo} />}
+          table={<OffersTable trackedOffers={trackedOffers} returnTo={returnTo} />}
+        />
       )}
     </main>
+  );
+}
+
+function FavoriteRemoveButton({ offerId, returnTo }: { offerId: string; returnTo: string }) {
+  return (
+    <form action={toggleFavoriteJob}>
+      <input type="hidden" name="jobOfferId" value={offerId} />
+      <input type="hidden" name="intent" value="remove" />
+      <input type="hidden" name="returnTo" value={returnTo} />
+      <Button
+        variant="outline"
+        size="icon"
+        type="submit"
+        aria-pressed="true"
+        aria-label="Retirer des favoris"
+        title="Retirer des favoris"
+        className="size-8 bg-card hover:border-[var(--border-strong)]"
+      >
+        <Star className="fill-[var(--accent)] text-[var(--accent)]" />
+      </Button>
+    </form>
   );
 }
 
@@ -111,17 +126,25 @@ function KanbanBoard({
   }));
 
   return (
-    <div className="vie-board">
+    <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2">
       {columns.map((column) => (
-        <section className="vie-column" key={column.key} aria-label={column.label}>
-          <header className="vie-column-head">
-            <span className="vie-column-title">{column.label}</span>
-            <span className="vie-column-count">{column.offers.length}</span>
+        <section
+          className="grid content-start gap-3 rounded-md border border-border bg-secondary p-3"
+          key={column.key}
+          aria-label={column.label}
+        >
+          <header className="flex items-center justify-between gap-2">
+            <span className="font-mono text-sm font-medium tracking-[0.02em] text-foreground">
+              {column.label}
+            </span>
+            <span className="inline-grid h-[22px] min-w-[22px] place-items-center rounded-full bg-card px-1 font-mono text-xs text-muted-foreground">
+              {column.offers.length}
+            </span>
           </header>
 
-          <div className="vie-column-body">
+          <div className="grid gap-2">
             {column.offers.length === 0 ? (
-              <p className="vie-column-empty">Aucune offre</p>
+              <p className="px-2 py-4 text-center text-xs text-[var(--faint)]">Aucune offre</p>
             ) : (
               column.offers.map((tracked) => (
                 <KanbanCard key={tracked.offer.id} tracked={tracked} returnTo={returnTo} />
@@ -141,37 +164,30 @@ function KanbanCard({ tracked, returnTo }: { tracked: TrackedJobOffer; returnTo:
   const duration = formatDuration(offer.durationMonths);
 
   return (
-    <article className="vie-card">
-      <div className="vie-card-head">
-        <h2 className="vie-card-title">
-          <a href={`/offres/${offer.id}`}>{offer.title}</a>
+    <Card className="grid gap-3 rounded-sm p-3">
+      <div className="flex items-start justify-between gap-2">
+        <h2 className="font-sans text-sm font-semibold leading-snug">
+          <a className="text-foreground hover:text-[var(--accent)]" href={`/offres/${offer.id}`}>
+            {offer.title}
+          </a>
         </h2>
-        <form action={toggleFavoriteJob}>
-          <input type="hidden" name="jobOfferId" value={offer.id} />
-          <input type="hidden" name="intent" value="remove" />
-          <input type="hidden" name="returnTo" value={returnTo} />
-          <button
-            className="icon-button icon-button-sm"
-            type="submit"
-            aria-pressed="true"
-            aria-label="Retirer des favoris"
-            title="Retirer des favoris"
-          >
-            ★
-          </button>
-        </form>
+        <FavoriteRemoveButton offerId={offer.id} returnTo={returnTo} />
       </div>
 
-      {offer.companyName ? <p className="vie-card-company">{offer.companyName}</p> : null}
+      {offer.companyName ? (
+        <p className="font-mono text-xs tracking-[0.02em] text-muted-foreground">
+          {offer.companyName}
+        </p>
+      ) : null}
 
-      <div className="tag-row">
-        <span className="tag tag-accent">{formatOfferStatus(status)}</span>
-        {location ? <span className="tag">{location}</span> : null}
-        {duration ? <span className="tag">{duration}</span> : null}
+      <div className="flex flex-wrap gap-2">
+        <Badge variant="accent">{formatOfferStatus(status)}</Badge>
+        {location ? <Badge>{location}</Badge> : null}
+        {duration ? <Badge>{duration}</Badge> : null}
       </div>
 
-      <StatusForm offerId={offer.id} status={status} returnTo={returnTo} />
-    </article>
+      <StatusSelect offerId={offer.id} status={status} returnTo={returnTo} />
+    </Card>
   );
 }
 
@@ -183,89 +199,54 @@ function OffersTable({
   returnTo: string;
 }) {
   return (
-    <div className="vie-table-wrap">
-      <table className="vie-table">
-        <thead>
-          <tr>
-            <th scope="col">Offre</th>
-            <th scope="col">Localisation</th>
-            <th scope="col">Statut</th>
-            <th scope="col">Publiée</th>
-            <th scope="col">
-              <span className="sr-only">Actions</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {trackedOffers.map((tracked) => {
-            const offer = tracked.offer;
-            const status = statusOf(tracked);
-            const location = formatLocation(offer.city, offer.country);
-            const published = formatDate(offer.publishedAt);
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Offre</TableHead>
+          <TableHead>Localisation</TableHead>
+          <TableHead>Statut</TableHead>
+          <TableHead>Publiée</TableHead>
+          <TableHead>
+            <span className="sr-only">Actions</span>
+          </TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {trackedOffers.map((tracked) => {
+          const offer = tracked.offer;
+          const status = statusOf(tracked);
+          const location = formatLocation(offer.city, offer.country);
+          const published = formatDate(offer.publishedAt);
 
-            return (
-              <tr key={offer.id}>
-                <td>
-                  <a className="vie-table-title" href={`/offres/${offer.id}`}>
-                    {offer.title}
-                  </a>
-                  {offer.companyName ? (
-                    <span className="vie-table-company">{offer.companyName}</span>
-                  ) : null}
-                </td>
-                <td>{location ?? "—"}</td>
-                <td>
-                  <StatusForm offerId={offer.id} status={status} returnTo={returnTo} />
-                </td>
-                <td className="vie-table-date">{published ?? "—"}</td>
-                <td className="vie-table-actions">
-                  <form action={toggleFavoriteJob}>
-                    <input type="hidden" name="jobOfferId" value={offer.id} />
-                    <input type="hidden" name="intent" value="remove" />
-                    <input type="hidden" name="returnTo" value={returnTo} />
-                    <button
-                      className="icon-button icon-button-sm"
-                      type="submit"
-                      aria-pressed="true"
-                      aria-label="Retirer des favoris"
-                      title="Retirer des favoris"
-                    >
-                      ★
-                    </button>
-                  </form>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function StatusForm({
-  offerId,
-  status,
-  returnTo
-}: {
-  offerId: string;
-  status: OfferApplicationStatus;
-  returnTo: string;
-}) {
-  return (
-    <form className="status-cell-form" action={updateJobApplicationStatus}>
-      <input type="hidden" name="jobOfferId" value={offerId} />
-      <input type="hidden" name="returnTo" value={returnTo} />
-      <select className="field field-compact" name="status" defaultValue={status}>
-        {TRACKED_OFFER_STATUSES.map((option) => (
-          <option key={option} value={option}>
-            {OFFER_STATUS_LABELS[option]}
-          </option>
-        ))}
-      </select>
-      <button className="btn btn-ghost btn-compact" type="submit">
-        OK
-      </button>
-    </form>
+          return (
+            <TableRow key={offer.id}>
+              <TableCell>
+                <a
+                  className="font-sans font-semibold text-foreground hover:text-[var(--accent)]"
+                  href={`/offres/${offer.id}`}
+                >
+                  {offer.title}
+                </a>
+                {offer.companyName ? (
+                  <span className="block font-mono text-xs tracking-[0.02em] text-muted-foreground">
+                    {offer.companyName}
+                  </span>
+                ) : null}
+              </TableCell>
+              <TableCell>{location ?? "—"}</TableCell>
+              <TableCell>
+                <StatusSelect offerId={offer.id} status={status} returnTo={returnTo} />
+              </TableCell>
+              <TableCell className="font-mono text-xs tracking-[0.02em] text-[var(--faint)]">
+                {published ?? "—"}
+              </TableCell>
+              <TableCell className="text-right">
+                <FavoriteRemoveButton offerId={offer.id} returnTo={returnTo} />
+              </TableCell>
+            </TableRow>
+          );
+        })}
+      </TableBody>
+    </Table>
   );
 }

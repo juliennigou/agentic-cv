@@ -1,6 +1,8 @@
 import { getOrCreateUserProfile } from "@agentic-cv/db";
 import { redirect } from "next/navigation";
 
+import { Eyebrow } from "@/components/eyebrow";
+import { Card } from "@/components/ui/card";
 import { IdentityForm } from "@/features/account/identity-form";
 import { getCurrentUser } from "@/features/auth/current-user";
 
@@ -16,17 +18,19 @@ export default async function ProfilTabPage() {
   const profile = await getOrCreateUserProfile({ userId: user.id });
 
   return (
-    <section className="account-section">
-      <div className="section-title-row">
-        <div>
-          <span className="eyebrow">Profil</span>
-          <h2>Identité &amp; contact</h2>
-        </div>
+    <Card className="grid gap-5 p-5">
+      <div className="grid gap-1">
+        <Eyebrow>Profil</Eyebrow>
+        <h2 className="font-display text-xl font-semibold tracking-[-0.01em]">
+          Identité &amp; contact
+        </h2>
       </div>
 
-      <p className="muted-text">Tes informations de base, réutilisées sur tes candidatures.</p>
+      <p className="text-sm leading-snug text-muted-foreground">
+        Tes informations de base, réutilisées sur tes candidatures.
+      </p>
 
       <IdentityForm profile={profile} />
-    </section>
+    </Card>
   );
 }

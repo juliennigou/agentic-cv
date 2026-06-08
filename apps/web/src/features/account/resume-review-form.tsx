@@ -10,11 +10,36 @@ import type {
 } from "@agentic-cv/shared";
 import { useActionState, useState } from "react";
 
+import { Eyebrow } from "@/components/eyebrow";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
+
 import { saveResumeProfile, type SaveResumeState } from "./cv-actions";
 
 type ResumeReviewFormProps = {
   resume: Resume;
 };
+
+// Champ étiqueté : <label> englobant pour l'association implicite (mono/muted).
+function Field({
+  label,
+  full = false,
+  children
+}: {
+  label: string;
+  full?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className={cn("grid gap-2", full && "sm:col-span-2")}>
+      <span className="font-mono text-sm tracking-[0.02em] text-muted-foreground">{label}</span>
+      {children}
+    </label>
+  );
+}
 
 function listToTextareaValue(items: string[]) {
   return items.join("\n");
@@ -67,23 +92,19 @@ export function ResumeReviewForm({ resume: initialResume }: ResumeReviewFormProp
   }
 
   return (
-    <form className="form-panel" action={formAction}>
+    <form className="grid gap-5" action={formAction}>
       <input type="hidden" name="resume" value={JSON.stringify(resume)} />
 
-      <label className="form-field">
-        <span>Résumé / accroche</span>
-        <textarea
-          className="field textarea-field"
+      <Field label="Résumé / accroche">
+        <Textarea
           value={resume.summary ?? ""}
           onChange={(event) => setResume((prev) => ({ ...prev, summary: event.target.value }))}
         />
-      </label>
+      </Field>
 
-      <fieldset className="form-grid two-columns" style={{ border: "none", padding: 0, margin: 0 }}>
-        <label className="form-field">
-          <span>Prénom</span>
-          <input
-            className="field"
+      <fieldset className="m-0 grid gap-4 border-0 p-0 sm:grid-cols-2">
+        <Field label="Prénom">
+          <Input
             value={resume.contact?.firstName ?? ""}
             onChange={(event) =>
               setResume((prev) => ({
@@ -92,11 +113,9 @@ export function ResumeReviewForm({ resume: initialResume }: ResumeReviewFormProp
               }))
             }
           />
-        </label>
-        <label className="form-field">
-          <span>Nom</span>
-          <input
-            className="field"
+        </Field>
+        <Field label="Nom">
+          <Input
             value={resume.contact?.lastName ?? ""}
             onChange={(event) =>
               setResume((prev) => ({
@@ -105,11 +124,9 @@ export function ResumeReviewForm({ resume: initialResume }: ResumeReviewFormProp
               }))
             }
           />
-        </label>
-        <label className="form-field">
-          <span>Téléphone</span>
-          <input
-            className="field"
+        </Field>
+        <Field label="Téléphone">
+          <Input
             value={resume.contact?.phone ?? ""}
             onChange={(event) =>
               setResume((prev) => ({
@@ -118,11 +135,9 @@ export function ResumeReviewForm({ resume: initialResume }: ResumeReviewFormProp
               }))
             }
           />
-        </label>
-        <label className="form-field">
-          <span>Localisation</span>
-          <input
-            className="field"
+        </Field>
+        <Field label="Localisation">
+          <Input
             value={resume.contact?.location ?? ""}
             onChange={(event) =>
               setResume((prev) => ({
@@ -131,321 +146,304 @@ export function ResumeReviewForm({ resume: initialResume }: ResumeReviewFormProp
               }))
             }
           />
-        </label>
+        </Field>
       </fieldset>
 
-      <div className="divider" />
+      <Separator />
 
-      <section className="form-field">
-        <div className="section-title-row">
-          <span className="eyebrow">Expériences</span>
-          <button
+      <section className="grid gap-4">
+        <div className="flex items-center justify-between gap-4">
+          <Eyebrow>Expériences</Eyebrow>
+          <Button
             type="button"
-            className="btn btn-ghost"
+            variant="ghost"
+            size="sm"
             onClick={() => addItem("experiences", { ...emptyExperience })}
           >
             + Ajouter
-          </button>
+          </Button>
         </div>
         {resume.experiences.map((item, index) => (
-          <div key={index} className="form-grid two-columns">
-            <label className="form-field">
-              <span>Poste</span>
-              <input
-                className="field"
+          <div key={index} className="grid gap-4 sm:grid-cols-2">
+            <Field label="Poste">
+              <Input
                 value={item.title}
-                onChange={(event) =>
-                  updateList("experiences", index, { title: event.target.value })
-                }
+                onChange={(event) => updateList("experiences", index, { title: event.target.value })}
               />
-            </label>
-            <label className="form-field">
-              <span>Entreprise</span>
-              <input
-                className="field"
+            </Field>
+            <Field label="Entreprise">
+              <Input
                 value={item.company ?? ""}
                 onChange={(event) =>
                   updateList("experiences", index, { company: event.target.value })
                 }
               />
-            </label>
-            <label className="form-field">
-              <span>Début</span>
-              <input
-                className="field"
+            </Field>
+            <Field label="Début">
+              <Input
                 value={item.startDate ?? ""}
                 onChange={(event) =>
                   updateList("experiences", index, { startDate: event.target.value })
                 }
               />
-            </label>
-            <label className="form-field">
-              <span>Fin</span>
-              <input
-                className="field"
+            </Field>
+            <Field label="Fin">
+              <Input
                 value={item.endDate ?? ""}
                 onChange={(event) =>
                   updateList("experiences", index, { endDate: event.target.value })
                 }
               />
-            </label>
-            <label className="form-field" style={{ gridColumn: "1 / -1" }}>
-              <span>Description</span>
-              <textarea
-                className="field textarea-field"
+            </Field>
+            <Field label="Description" full>
+              <Textarea
                 value={item.description ?? ""}
                 onChange={(event) =>
                   updateList("experiences", index, { description: event.target.value })
                 }
               />
-            </label>
-            <button
+            </Field>
+            <Button
               type="button"
-              className="btn btn-danger"
+              variant="danger"
+              size="sm"
+              className="justify-self-start"
               onClick={() => removeItem("experiences", index)}
             >
               Supprimer
-            </button>
+            </Button>
           </div>
         ))}
       </section>
 
-      <div className="divider" />
+      <Separator />
 
-      <section className="form-field">
-        <div className="section-title-row">
-          <span className="eyebrow">Formation</span>
-          <button
+      <section className="grid gap-4">
+        <div className="flex items-center justify-between gap-4">
+          <Eyebrow>Formation</Eyebrow>
+          <Button
             type="button"
-            className="btn btn-ghost"
+            variant="ghost"
+            size="sm"
             onClick={() => addItem("education", { ...emptyEducation })}
           >
             + Ajouter
-          </button>
+          </Button>
         </div>
         {resume.education.map((item, index) => (
-          <div key={index} className="form-grid two-columns">
-            <label className="form-field">
-              <span>École / établissement</span>
-              <input
-                className="field"
+          <div key={index} className="grid gap-4 sm:grid-cols-2">
+            <Field label="École / établissement">
+              <Input
                 value={item.school}
                 onChange={(event) => updateList("education", index, { school: event.target.value })}
               />
-            </label>
-            <label className="form-field">
-              <span>Diplôme</span>
-              <input
-                className="field"
+            </Field>
+            <Field label="Diplôme">
+              <Input
                 value={item.degree ?? ""}
                 onChange={(event) => updateList("education", index, { degree: event.target.value })}
               />
-            </label>
-            <label className="form-field">
-              <span>Début</span>
-              <input
-                className="field"
+            </Field>
+            <Field label="Début">
+              <Input
                 value={item.startDate ?? ""}
                 onChange={(event) =>
                   updateList("education", index, { startDate: event.target.value })
                 }
               />
-            </label>
-            <label className="form-field">
-              <span>Fin</span>
-              <input
-                className="field"
+            </Field>
+            <Field label="Fin">
+              <Input
                 value={item.endDate ?? ""}
                 onChange={(event) =>
                   updateList("education", index, { endDate: event.target.value })
                 }
               />
-            </label>
-            <button
+            </Field>
+            <Button
               type="button"
-              className="btn btn-danger"
+              variant="danger"
+              size="sm"
+              className="justify-self-start"
               onClick={() => removeItem("education", index)}
             >
               Supprimer
-            </button>
+            </Button>
           </div>
         ))}
       </section>
 
-      <div className="divider" />
+      <Separator />
 
-      <section className="form-field">
-        <div className="section-title-row">
-          <span className="eyebrow">Projets</span>
-          <button
+      <section className="grid gap-4">
+        <div className="flex items-center justify-between gap-4">
+          <Eyebrow>Projets</Eyebrow>
+          <Button
             type="button"
-            className="btn btn-ghost"
+            variant="ghost"
+            size="sm"
             onClick={() => addItem("projects", { ...emptyProject })}
           >
             + Ajouter
-          </button>
+          </Button>
         </div>
         {resume.projects.map((item, index) => (
-          <div key={index} className="form-grid two-columns">
-            <label className="form-field">
-              <span>Nom</span>
-              <input
-                className="field"
+          <div key={index} className="grid gap-4 sm:grid-cols-2">
+            <Field label="Nom">
+              <Input
                 value={item.name}
                 onChange={(event) => updateList("projects", index, { name: event.target.value })}
               />
-            </label>
-            <label className="form-field">
-              <span>Lien</span>
-              <input
-                className="field"
+            </Field>
+            <Field label="Lien">
+              <Input
                 value={item.link ?? ""}
                 onChange={(event) => updateList("projects", index, { link: event.target.value })}
               />
-            </label>
-            <label className="form-field" style={{ gridColumn: "1 / -1" }}>
-              <span>Description</span>
-              <textarea
-                className="field textarea-field"
+            </Field>
+            <Field label="Description" full>
+              <Textarea
                 value={item.description ?? ""}
                 onChange={(event) =>
                   updateList("projects", index, { description: event.target.value })
                 }
               />
-            </label>
-            <button
+            </Field>
+            <Button
               type="button"
-              className="btn btn-danger"
+              variant="danger"
+              size="sm"
+              className="justify-self-start"
               onClick={() => removeItem("projects", index)}
             >
               Supprimer
-            </button>
+            </Button>
           </div>
         ))}
       </section>
 
-      <div className="divider" />
+      <Separator />
 
-      <section className="form-field">
-        <div className="section-title-row">
-          <span className="eyebrow">Extra-scolaire</span>
-          <button
+      <section className="grid gap-4">
+        <div className="flex items-center justify-between gap-4">
+          <Eyebrow>Extra-scolaire</Eyebrow>
+          <Button
             type="button"
-            className="btn btn-ghost"
+            variant="ghost"
+            size="sm"
             onClick={() => addItem("extracurriculars", { ...emptyExtracurricular })}
           >
             + Ajouter
-          </button>
+          </Button>
         </div>
         {resume.extracurriculars.map((item, index) => (
-          <div key={index} className="form-grid">
-            <label className="form-field">
-              <span>Titre</span>
-              <input
-                className="field"
+          <div key={index} className="grid gap-4">
+            <Field label="Titre">
+              <Input
                 value={item.title}
                 onChange={(event) =>
                   updateList("extracurriculars", index, { title: event.target.value })
                 }
               />
-            </label>
-            <label className="form-field">
-              <span>Description</span>
-              <textarea
-                className="field textarea-field"
+            </Field>
+            <Field label="Description">
+              <Textarea
                 value={item.description ?? ""}
                 onChange={(event) =>
                   updateList("extracurriculars", index, { description: event.target.value })
                 }
               />
-            </label>
-            <button
+            </Field>
+            <Button
               type="button"
-              className="btn btn-danger"
+              variant="danger"
+              size="sm"
+              className="justify-self-start"
               onClick={() => removeItem("extracurriculars", index)}
             >
               Supprimer
-            </button>
+            </Button>
           </div>
         ))}
       </section>
 
-      <div className="divider" />
+      <Separator />
 
-      <section className="form-field">
-        <div className="section-title-row">
-          <span className="eyebrow">Langues</span>
-          <button
+      <section className="grid gap-4">
+        <div className="flex items-center justify-between gap-4">
+          <Eyebrow>Langues</Eyebrow>
+          <Button
             type="button"
-            className="btn btn-ghost"
+            variant="ghost"
+            size="sm"
             onClick={() => addItem("languages", { ...emptyLanguage })}
           >
             + Ajouter
-          </button>
+          </Button>
         </div>
         {resume.languages.map((item, index) => (
-          <div key={index} className="form-grid two-columns">
-            <label className="form-field">
-              <span>Langue</span>
-              <input
-                className="field"
+          <div key={index} className="grid gap-4 sm:grid-cols-2">
+            <Field label="Langue">
+              <Input
                 value={item.language}
-                onChange={(event) =>
-                  updateList("languages", index, { language: event.target.value })
-                }
+                onChange={(event) => updateList("languages", index, { language: event.target.value })}
               />
-            </label>
-            <label className="form-field">
-              <span>Niveau</span>
-              <input
-                className="field"
+            </Field>
+            <Field label="Niveau">
+              <Input
                 value={item.level ?? ""}
                 onChange={(event) => updateList("languages", index, { level: event.target.value })}
               />
-            </label>
-            <button
+            </Field>
+            <Button
               type="button"
-              className="btn btn-danger"
+              variant="danger"
+              size="sm"
+              className="justify-self-start"
               onClick={() => removeItem("languages", index)}
             >
               Supprimer
-            </button>
+            </Button>
           </div>
         ))}
       </section>
 
-      <div className="divider" />
+      <Separator />
 
-      <div className="form-grid two-columns">
-        <label className="form-field">
-          <span>Compétences (une par ligne)</span>
-          <textarea
-            className="field textarea-field"
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Compétences (une par ligne)">
+          <Textarea
             value={listToTextareaValue(resume.skills)}
             onChange={(event) =>
               setResume((prev) => ({ ...prev, skills: textareaValueToList(event.target.value) }))
             }
           />
-        </label>
-        <label className="form-field">
-          <span>Logiciels / outils (un par ligne)</span>
-          <textarea
-            className="field textarea-field"
+        </Field>
+        <Field label="Logiciels / outils (un par ligne)">
+          <Textarea
             value={listToTextareaValue(resume.tools)}
             onChange={(event) =>
               setResume((prev) => ({ ...prev, tools: textareaValueToList(event.target.value) }))
             }
           />
-        </label>
+        </Field>
       </div>
 
       {state.message ? (
-        <p className={state.status === "error" ? "form-error" : "form-success"}>{state.message}</p>
+        <p
+          className={
+            state.status === "error"
+              ? "text-sm text-[var(--danger)]"
+              : "text-sm text-[var(--success)]"
+          }
+        >
+          {state.message}
+        </p>
       ) : null}
 
-      <button className="btn btn-primary" type="submit" disabled={pending}>
+      <Button type="submit" className="justify-self-start" disabled={pending}>
         {pending ? "Enregistrement..." : "Enregistrer le profil"}
-      </button>
+      </Button>
     </form>
   );
 }

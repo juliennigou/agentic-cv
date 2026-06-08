@@ -2,6 +2,10 @@
 
 import { useActionState, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
 import { signInWithPassword, signUpWithPassword } from "./actions";
 
 type AuthFormProps = {
@@ -19,14 +23,16 @@ export function AuthForm({ mode, next = "/compte" }: AuthFormProps) {
   const submitLabel = mode === "signin" ? "Se connecter" : "Créer le compte";
 
   return (
-    <form className="form-panel" action={formAction}>
+    <form className="grid gap-5" action={formAction}>
       <input type="hidden" name="next" value={next} />
 
-      <div className="form-grid">
-        <label className="form-field">
-          <span>Email</span>
-          <input
-            className="field"
+      <div className="grid gap-4">
+        <div className="grid gap-2">
+          <Label htmlFor="auth-email" className="text-muted-foreground">
+            Email
+          </Label>
+          <Input
+            id="auth-email"
             name="email"
             type="email"
             inputMode="email"
@@ -37,45 +43,54 @@ export function AuthForm({ mode, next = "/compte" }: AuthFormProps) {
             required
             placeholder="prenom.nom@email.com"
           />
-        </label>
+        </div>
 
-        <label className="form-field">
-          <span>Mot de passe</span>
-          <div className="field-affix">
-            <input
-              className="field field-affix-input"
+        <div className="grid gap-2">
+          <Label htmlFor="auth-password" className="text-muted-foreground">
+            Mot de passe
+          </Label>
+          <div className="relative">
+            <Input
+              id="auth-password"
               name="password"
               type={passwordVisible ? "text" : "password"}
               autoComplete={mode === "signin" ? "current-password" : "new-password"}
               minLength={8}
               required
               placeholder="8 caractères minimum"
+              className="pr-24"
             />
-            <button
+            <Button
               type="button"
-              className="password-toggle"
+              variant="link"
+              size="sm"
               onClick={() => setPasswordVisible((visible) => !visible)}
               aria-pressed={passwordVisible}
               aria-label={passwordVisible ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+              className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
               {passwordVisible ? "Masquer" : "Afficher"}
-            </button>
+            </Button>
           </div>
-        </label>
+        </div>
       </div>
 
       {state.message ? (
         <p
-          className={state.status === "error" ? "form-error" : "form-success"}
+          className={
+            state.status === "error"
+              ? "text-sm text-[var(--danger)]"
+              : "text-sm text-[var(--success)]"
+          }
           role={state.status === "error" ? "alert" : "status"}
         >
           {state.message}
         </p>
       ) : null}
 
-      <button className="btn btn-primary btn-full" type="submit" disabled={pending}>
+      <Button type="submit" className="w-full" disabled={pending}>
         {pending ? "En cours..." : submitLabel}
-      </button>
+      </Button>
     </form>
   );
 }

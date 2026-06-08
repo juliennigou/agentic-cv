@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button";
+
 import { signInWithOAuth } from "./actions";
 
 const providers = [
@@ -13,14 +15,14 @@ const providers = [
 
 export function OAuthButtons({ next = "/compte" }: { next?: string }) {
   return (
-    <div className="button-stack">
+    <div className="grid gap-3">
       {providers.map((provider) => (
         <form action={signInWithOAuth} key={provider.id}>
           <input type="hidden" name="provider" value={provider.id} />
           <input type="hidden" name="next" value={next} />
-          <button className="btn btn-ghost btn-full" type="submit">
+          <Button variant="outline" type="submit" className="w-full">
             {provider.label}
-          </button>
+          </Button>
         </form>
       ))}
     </div>

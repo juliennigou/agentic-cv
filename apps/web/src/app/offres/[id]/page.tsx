@@ -1,21 +1,25 @@
 import { getJobOfferById, getUserOfferState } from "@agentic-cv/db";
+import { Star } from "lucide-react";
 import { notFound } from "next/navigation";
 
+import { Eyebrow } from "@/components/eyebrow";
 import { SiteHeader } from "@/components/site-header";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { getCurrentUser } from "@/features/auth/current-user";
-import { toggleFavoriteJob, updateJobApplicationStatus } from "@/features/offers/actions";
+import { toggleFavoriteJob } from "@/features/offers/actions";
 import { formatDate, formatDuration, formatLocation } from "@/features/offers/offer-view";
-import {
-  formatOfferStatus,
-  OFFER_STATUS_LABELS,
-  TRACKED_OFFER_STATUSES
-} from "@/features/offers/status";
+import { StatusSelect } from "@/features/offers/status-select";
+import { formatOfferStatus } from "@/features/offers/status";
 
 export const dynamic = "force-dynamic";
 
 type OfferDetailPageProps = {
   params: Promise<{ id: string }>;
 };
+
+const factLabelClass = "font-mono text-xs uppercase tracking-[0.06em] text-[var(--faint)]";
 
 export default async function OfferDetailPage({ params }: OfferDetailPageProps) {
   const { id } = await params;
@@ -34,24 +38,29 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
   const published = formatDate(offer.publishedAt);
 
   return (
-    <main className="page-shell">
+    <main className="mx-auto w-full max-w-[1120px] px-5 pb-16 pt-8">
       <SiteHeader active="offres" />
 
-      <a className="back-link" href="/offres">
+      <a
+        className="inline-flex items-center gap-2 font-mono text-sm tracking-[0.02em] text-muted-foreground transition-colors hover:text-foreground"
+        href="/offres"
+      >
         ← Toutes les offres
       </a>
 
-      <header className="detail-header">
-        <span className="eyebrow">{offer.contractType ?? "V.I.E"}</span>
-        <h1>{offer.title}</h1>
-        <div className="tag-row">
-          {offer.companyName ? <span className="tag tag-accent">{offer.companyName}</span> : null}
-          {location ? <span className="tag">{location}</span> : null}
-          {duration ? <span className="tag">{duration}</span> : null}
+      <header className="grid gap-4 border-b border-border pb-8 pt-5">
+        <Eyebrow>{offer.contractType ?? "V.I.E"}</Eyebrow>
+        <h1 className="font-display text-3xl font-semibold leading-tight tracking-[-0.02em]">
+          {offer.title}
+        </h1>
+        <div className="flex flex-wrap gap-2">
+          {offer.companyName ? <Badge variant="accent">{offer.companyName}</Badge> : null}
+          {location ? <Badge>{location}</Badge> : null}
+          {duration ? <Badge>{duration}</Badge> : null}
         </div>
       </header>
 
-      <div className="detail-grid">
+      <div className="grid items-start gap-8 pt-8 md:grid-cols-[minmax(0,1fr)_300px]">
         <article className="prose">
           <section>
             <h2>Description</h2>
@@ -65,15 +74,13 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
           ) : null}
           {offer.companyDescription ? (
             <section>
-              <div className="section-heading-row">
+              <div className="flex flex-wrap items-baseline gap-2">
                 <h2>À propos de l'entreprise</h2>
-                {offer.companyDescriptionGenerated ? (
-                  <span className="tag tag-accent">Résumé IA</span>
-                ) : null}
+                {offer.companyDescriptionGenerated ? <Badge variant="accent">Résumé IA</Badge> : null}
               </div>
               <p>{offer.companyDescription}</p>
               {offer.companyDescriptionGenerated ? (
-                <p className="note-ai">
+                <p className="mt-1 text-xs italic text-muted-foreground">
                   Présentation générée automatiquement à partir du nom de l'entreprise, à titre
                   indicatif.
                 </p>
@@ -82,96 +89,94 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
           ) : null}
         </article>
 
-        <aside className="detail-aside">
-          <div className="offer-state-panel">
+        <Card className="sticky top-5 grid gap-5 p-5">
+          <div className="grid gap-3 border-b border-border pb-5">
             <div>
-              <span className="eyebrow">Suivi</span>
-              <p className="offer-state-title">{formatOfferStatus(applicationStatus)}</p>
+              <Eyebrow>Suivi</Eyebrow>
+              <p className="mt-1 font-display text-xl font-semibold">
+                {formatOfferStatus(applicationStatus)}
+              </p>
             </div>
 
             <form action={toggleFavoriteJob}>
               <input type="hidden" name="jobOfferId" value={offer.id} />
               <input type="hidden" name="intent" value={favorite ? "remove" : "save"} />
               <input type="hidden" name="returnTo" value={`/offres/${offer.id}`} />
-              <button className="btn btn-ghost btn-full" type="submit" aria-pressed={favorite}>
-                <span aria-hidden="true">{favorite ? "★" : "☆"}</span>
+              <Button
+                variant="outline"
+                type="submit"
+                aria-pressed={favorite}
+                className="w-full aria-pressed:border-[var(--accent)] aria-pressed:bg-[var(--accent-soft)] aria-pressed:text-[var(--accent)]"
+              >
+                <Star className={favorite ? "fill-[var(--accent)] text-[var(--accent)]" : ""} />
                 {favorite ? "Dans mes favoris" : "Ajouter aux favoris"}
-              </button>
+              </Button>
             </form>
 
-            <form className="status-form" action={updateJobApplicationStatus}>
-              <input type="hidden" name="jobOfferId" value={offer.id} />
-              <input type="hidden" name="returnTo" value={`/offres/${offer.id}`} />
-              <label className="form-field">
-                <span>Statut</span>
-                <select
-                  className="field"
-                  name="status"
-                  defaultValue={applicationStatus ?? "unread"}
-                >
-                  {TRACKED_OFFER_STATUSES.map((status) => (
-                    <option key={status} value={status}>
-                      {OFFER_STATUS_LABELS[status]}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <button className="btn btn-ghost btn-full" type="submit">
-                Mettre à jour
-              </button>
-            </form>
+            <div className="grid gap-2">
+              <span className="font-mono text-sm tracking-[0.02em] text-muted-foreground">
+                Statut
+              </span>
+              <StatusSelect
+                offerId={offer.id}
+                status={applicationStatus ?? "unread"}
+                returnTo={`/offres/${offer.id}`}
+              />
+            </div>
           </div>
 
-          <dl className="facts">
+          <dl className="m-0 grid gap-4">
             {offer.companyName ? (
-              <div>
-                <dt>Entreprise</dt>
-                <dd>{offer.companyName}</dd>
+              <div className="grid gap-1">
+                <dt className={factLabelClass}>Entreprise</dt>
+                <dd className="m-0">{offer.companyName}</dd>
               </div>
             ) : null}
             {location ? (
-              <div>
-                <dt>Localisation</dt>
-                <dd>{location}</dd>
+              <div className="grid gap-1">
+                <dt className={factLabelClass}>Localisation</dt>
+                <dd className="m-0">{location}</dd>
               </div>
             ) : null}
             {offer.contractType ? (
-              <div>
-                <dt>Contrat</dt>
-                <dd>{offer.contractType}</dd>
+              <div className="grid gap-1">
+                <dt className={factLabelClass}>Contrat</dt>
+                <dd className="m-0">{offer.contractType}</dd>
               </div>
             ) : null}
             {duration ? (
-              <div>
-                <dt>Durée</dt>
-                <dd>{duration}</dd>
+              <div className="grid gap-1">
+                <dt className={factLabelClass}>Durée</dt>
+                <dd className="m-0">{duration}</dd>
               </div>
             ) : null}
             {offer.salary ? (
-              <div>
-                <dt>Rémunération</dt>
-                <dd>{offer.salary}</dd>
+              <div className="grid gap-1">
+                <dt className={factLabelClass}>Rémunération</dt>
+                <dd className="m-0">{offer.salary}</dd>
               </div>
             ) : null}
             {published ? (
-              <div>
-                <dt>Publiée le</dt>
-                <dd>{published}</dd>
+              <div className="grid gap-1">
+                <dt className={factLabelClass}>Publiée le</dt>
+                <dd className="m-0">{published}</dd>
               </div>
             ) : null}
-            <div>
-              <dt>Source</dt>
-              <dd>{offer.source}</dd>
+            <div className="grid gap-1">
+              <dt className={factLabelClass}>Source</dt>
+              <dd className="m-0">{offer.source}</dd>
             </div>
           </dl>
 
-          <a className="btn btn-primary" href={offer.sourceUrl} target="_blank" rel="noreferrer">
-            Voir l'offre originale ↗
-          </a>
-          <button className="btn btn-ghost" type="button" disabled>
+          <Button asChild className="w-full">
+            <a href={offer.sourceUrl} target="_blank" rel="noreferrer">
+              Voir l'offre originale ↗
+            </a>
+          </Button>
+          <Button variant="ghost" type="button" disabled className="w-full">
             Préparer ma candidature
-          </button>
-        </aside>
+          </Button>
+        </Card>
       </div>
     </main>
   );

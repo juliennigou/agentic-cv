@@ -3,6 +3,9 @@
 import type { UserProfileDetail } from "@agentic-cv/db";
 import { useActionState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+
 import { updatePreferences, type ProfileActionState } from "./actions";
 
 type PreferencesFormProps = {
@@ -15,26 +18,26 @@ function listToTextareaValue(items: string[]) {
 
 const initialState: ProfileActionState = { status: "idle", message: null };
 
+const labelClass = "font-mono text-sm tracking-[0.02em] text-muted-foreground";
+
 export function PreferencesForm({ profile }: PreferencesFormProps) {
   const [state, formAction, pending] = useActionState(updatePreferences, initialState);
 
   return (
-    <form className="form-panel" action={formAction}>
-      <div className="form-grid two-columns">
-        <label className="form-field">
-          <span>Rôles visés</span>
-          <textarea
-            className="field textarea-field"
+    <form className="grid gap-5" action={formAction}>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className="grid gap-2">
+          <span className={labelClass}>Rôles visés</span>
+          <Textarea
             name="targetRoles"
             defaultValue={listToTextareaValue(profile.targetRoles)}
             placeholder={"Business developer\nData analyst\nChef de projet"}
           />
         </label>
 
-        <label className="form-field">
-          <span>Pays visés</span>
-          <textarea
-            className="field textarea-field"
+        <label className="grid gap-2">
+          <span className={labelClass}>Pays visés</span>
+          <Textarea
             name="targetCountries"
             defaultValue={listToTextareaValue(profile.targetCountries)}
             placeholder={"Canada\nEspagne\nÉtats-Unis"}
@@ -42,17 +45,25 @@ export function PreferencesForm({ profile }: PreferencesFormProps) {
         </label>
       </div>
 
-      <p className="muted-text">
+      <p className="text-sm leading-snug text-muted-foreground">
         Ces préférences serviront à t'alerter quand une nouvelle offre correspond à ton profil.
       </p>
 
       {state.message ? (
-        <p className={state.status === "error" ? "form-error" : "form-success"}>{state.message}</p>
+        <p
+          className={
+            state.status === "error"
+              ? "text-sm text-[var(--danger)]"
+              : "text-sm text-[var(--success)]"
+          }
+        >
+          {state.message}
+        </p>
       ) : null}
 
-      <button className="btn btn-primary" type="submit" disabled={pending}>
+      <Button type="submit" className="justify-self-start" disabled={pending}>
         {pending ? "Enregistrement..." : "Enregistrer"}
-      </button>
+      </Button>
     </form>
   );
 }

@@ -1,3 +1,9 @@
+import { Star } from "lucide-react";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+
 import { toggleFavoriteJob } from "./actions";
 import {
   excerpt,
@@ -16,47 +22,61 @@ export function OfferCard({ offer, returnTo }: { offer: OfferListItem; returnTo:
   const status = offer.userState?.applicationStatus ?? null;
 
   return (
-    <article className="offer-card">
-      <div className="offer-head">
+    <Card className="flex flex-col gap-4 p-5 transition-colors hover:border-[var(--border-strong)]">
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="offer-title">
-            <a href={`/offres/${offer.id}`}>{offer.title}</a>
+          <h2 className="font-display text-xl font-semibold leading-snug tracking-[-0.01em]">
+            <a className="text-foreground hover:text-[var(--accent)]" href={`/offres/${offer.id}`}>
+              {offer.title}
+            </a>
           </h2>
-          {offer.companyName ? <p className="offer-company">{offer.companyName}</p> : null}
+          {offer.companyName ? (
+            <p className="mt-1 font-mono text-sm tracking-[0.02em] text-muted-foreground">
+              {offer.companyName}
+            </p>
+          ) : null}
         </div>
         <form action={toggleFavoriteJob}>
           <input type="hidden" name="jobOfferId" value={offer.id} />
           <input type="hidden" name="intent" value={favorite ? "remove" : "save"} />
           <input type="hidden" name="returnTo" value={returnTo} />
-          <button
-            className="icon-button"
+          <Button
+            variant="outline"
+            size="icon"
             type="submit"
             aria-pressed={favorite}
             aria-label={favorite ? "Retirer des favoris" : "Ajouter aux favoris"}
             title={favorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+            className="size-10 bg-card text-muted-foreground hover:border-[var(--border-strong)] hover:bg-secondary hover:text-foreground aria-pressed:border-[var(--accent)] aria-pressed:bg-[var(--accent-soft)] aria-pressed:text-[var(--accent)]"
           >
-            {favorite ? "★" : "☆"}
-          </button>
+            <Star className={favorite ? "fill-[var(--accent)] text-[var(--accent)]" : ""} />
+          </Button>
         </form>
       </div>
 
-      {offer.description ? <p className="offer-excerpt">{excerpt(offer.description)}</p> : null}
+      {offer.description ? (
+        <p className="text-sm leading-snug text-muted-foreground">{excerpt(offer.description)}</p>
+      ) : null}
 
-      <div className="offer-actions">
-        <span className={status ? "tag tag-accent" : "tag"}>{formatOfferStatus(status)}</span>
-        <a className="btn btn-ghost btn-compact" href={`/offres/${offer.id}`}>
-          Préparer ma candidature
-        </a>
+      <div className="flex items-center justify-between gap-3">
+        <Badge variant={status ? "accent" : "default"}>{formatOfferStatus(status)}</Badge>
+        <Button variant="ghost" size="sm" asChild>
+          <a href={`/offres/${offer.id}`}>Préparer ma candidature</a>
+        </Button>
       </div>
 
-      <div className="offer-foot">
-        <div className="tag-row">
-          {offer.contractType ? <span className="tag tag-accent">{offer.contractType}</span> : null}
-          {location ? <span className="tag">{location}</span> : null}
-          {duration ? <span className="tag">{duration}</span> : null}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-2">
+          {offer.contractType ? <Badge variant="accent">{offer.contractType}</Badge> : null}
+          {location ? <Badge>{location}</Badge> : null}
+          {duration ? <Badge>{duration}</Badge> : null}
         </div>
-        {date ? <span className="offer-date">{date}</span> : null}
+        {date ? (
+          <span className="shrink-0 font-mono text-xs tracking-[0.02em] text-[var(--faint)]">
+            {date}
+          </span>
+        ) : null}
       </div>
-    </article>
+    </Card>
   );
 }
