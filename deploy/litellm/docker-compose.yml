@@ -1,0 +1,37 @@
+# Service LiteLLM autonome et permanent : la passerelle LLM partagée du projet.
+# Rejoint le réseau Docker externe `llm-net` pour être joignable par le cron
+# (et la web app si elle tourne sur le même VPS) via le nom d'hôte `litellm`.
+#
+#   docker network create llm-net   # une seule fois
+#   cp .env.example .env && $EDITOR .env
+#   docker compose up -d
+#
+# Accès :
+#   - interne (même réseau Docker) : http://litellm:4000/v1
+#   - public  (via reverse-proxy)  : https://llm.tondomaine.com/v1  (cf. README)
+services:
+  litellm:
+    image: ghcr.io/berriai/litellm:main-stable
+    container_name: litellm
+    restart: unless-stopped
+    command: ["--config", "/etc/litellm/config.yaml", "--port", "4000"]
+    volumes:
+      - ./config.yaml:/etc/litellm/config.yaml:ro
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?définis OPENAI_API_KEY dans .env}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:?définis DEEPSEEK_API_KEY dans .env}
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY:?définis LITELLM_MASTER_KEY dans .env}
+    # Exposé en local uniquement ; le reverse-proxy (Caddy/Nginx) gère le HTTPS public.
+    ports:
+      - "127.0.0.1:4000:4000"
+    networks:
+      - llm-net
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:4000/health/liveliness"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+networks:
+  llm-net:
+    external: true

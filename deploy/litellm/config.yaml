@@ -1,0 +1,30 @@
+# Passerelle LiteLLM partagée : un seul endpoint OpenAI-compatible pour le cron,
+# la web app et tout autre consommateur. Les `model_name` exposés ici doivent
+# correspondre aux variables LITELLM_*_MODEL côté application.
+model_list:
+  # Embeddings (mêmes vecteurs que les offres déjà indexées : 1536 dim).
+  - model_name: text-embedding-3-small
+    litellm_params:
+      model: openai/text-embedding-3-small
+      api_key: os.environ/OPENAI_API_KEY
+
+  # Chat pour la structuration des offres et le parsing de CV (DeepSeek, bon marché).
+  - model_name: deepseek-chat
+    litellm_params:
+      model: deepseek/deepseek-chat
+      api_key: os.environ/DEEPSEEK_API_KEY
+
+  # Alternative chat OpenAI (utile en repli / si tu préfères tout OpenAI).
+  - model_name: gpt-4o-mini
+    litellm_params:
+      model: openai/gpt-4o-mini
+      api_key: os.environ/OPENAI_API_KEY
+
+general_settings:
+  # Toute requête doit présenter cette clé (Authorization: Bearer …).
+  master_key: os.environ/LITELLM_MASTER_KEY
+
+litellm_settings:
+  # Ignore silencieusement les paramètres non supportés par un provider
+  # (ex. `dimensions`/`input_type`) au lieu de renvoyer une erreur 400.
+  drop_params: true

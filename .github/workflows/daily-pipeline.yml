@@ -1,15 +1,19 @@
 name: Daily pipeline
 
-# Pipeline quotidienne : scrape → structure → embed → match.
-# Secrets à configurer dans le repo (Settings → Secrets and variables → Actions) :
-#   - DATABASE_URL              connexion Postgres (pooler) pour l'app/runtime
-#   - DIRECT_URL                connexion directe Postgres (migrations Prisma)
-#   - LITELLM_BASE_URL          proxy LiteLLM OpenAI-compatible
-#   - LITELLM_API_KEY           clé du proxy LiteLLM (si protégé)
-#   - LITELLM_EMBEDDING_MODEL   (optionnel) modèle d'embedding ; défaut openai/text-embedding-3-small
+# Pipeline scrape → structure → embed → match.
+#
+# La planification quotidienne tourne sur le VPS (cf. deploy/README.md) ;
+# ce workflow ne garde qu'un déclenchement MANUEL (workflow_dispatch), utile
+# comme repli/test depuis GitHub. Il nécessite que Supabase et LiteLLM soient
+# joignables depuis les runners GitHub (pooler IPv4 + endpoint LiteLLM public).
+#
+# Secrets requis (Settings → Secrets and variables → Actions) :
+#   - DATABASE_URL              Postgres Supabase (transaction pooler, 6543)
+#   - DIRECT_URL                Postgres Supabase (session pooler, 5432)
+#   - LITELLM_BASE_URL          endpoint LiteLLM public (HTTPS)
+#   - LITELLM_API_KEY           clé maître du proxy LiteLLM
+#   - LITELLM_EMBEDDING_MODEL   (optionnel) défaut text-embedding-3-small
 on:
-  schedule:
-    - cron: "0 5 * * *"
   workflow_dispatch:
 
 env:
