@@ -141,6 +141,9 @@ importers:
       '@agentic-cv/scraper-core':
         specifier: workspace:*
         version: link:../../packages/scraper-core
+      '@agentic-cv/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
     devDependencies:
       tsx:
         specifier: ^4.19.2

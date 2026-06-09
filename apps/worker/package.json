@@ -12,13 +12,15 @@
     "scrape:business-france": "tsx src/cli/scrape-business-france.ts",
     "structure:job-offers": "tsx src/cli/structure-job-offers.ts",
     "embed:job-offers": "tsx src/cli/embed-job-offers.ts",
+    "match:job-offers": "tsx src/cli/match-job-offers.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@agentic-cv/ai": "workspace:*",
     "@agentic-cv/db": "workspace:*",
     "@agentic-cv/scraper-business-france": "workspace:*",
-    "@agentic-cv/scraper-core": "workspace:*"
+    "@agentic-cv/scraper-core": "workspace:*",
+    "@agentic-cv/shared": "workspace:*"
   },
   "devDependencies": {
     "tsx": "^4.19.2",

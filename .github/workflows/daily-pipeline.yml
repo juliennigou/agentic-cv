@@ -1,0 +1,55 @@
+name: Daily pipeline
+
+# Pipeline quotidienne : scrape → structure → embed → match.
+# Secrets à configurer dans le repo (Settings → Secrets and variables → Actions) :
+#   - DATABASE_URL              connexion Postgres (pooler) pour l'app/runtime
+#   - DIRECT_URL                connexion directe Postgres (migrations Prisma)
+#   - LITELLM_BASE_URL          proxy LiteLLM OpenAI-compatible
+#   - LITELLM_API_KEY           clé du proxy LiteLLM (si protégé)
+#   - LITELLM_EMBEDDING_MODEL   (optionnel) modèle d'embedding ; défaut openai/text-embedding-3-small
+on:
+  schedule:
+    - cron: "0 5 * * *"
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  pipeline:
+    name: Scrape, structure, embed & match
+    runs-on: ubuntu-latest
+
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DIRECT_URL: ${{ secrets.DIRECT_URL }}
+      LITELLM_BASE_URL: ${{ secrets.LITELLM_BASE_URL }}
+      LITELLM_API_KEY: ${{ secrets.LITELLM_API_KEY }}
+      LITELLM_EMBEDDING_MODEL: ${{ secrets.LITELLM_EMBEDDING_MODEL }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm db:generate
+
+      - name: Apply migrations
+        run: pnpm db:deploy
+
+      - name: Run daily pipeline
+        run: pnpm pipeline:job-offers

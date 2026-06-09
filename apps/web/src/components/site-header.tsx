@@ -2,7 +2,7 @@ import { getCurrentUser } from "@/features/auth/current-user";
 
 type SiteHeaderProps = {
   /** Onglet actif dans la navigation, pour l'état `aria-current`. */
-  active?: "offres" | "mes-vie" | "compte" | "connexion";
+  active?: "offres" | "rapport" | "mes-vie" | "compte" | "connexion";
 };
 
 // Lien de nav : mono discret, accentué sur l'onglet actif (aria-current).
@@ -28,6 +28,15 @@ export async function SiteHeader({ active }: SiteHeaderProps) {
         >
           Les offres
         </a>
+        {user ? (
+          <a
+            href="/rapport"
+            className={navLinkClass(active === "rapport")}
+            aria-current={active === "rapport" ? "page" : undefined}
+          >
+            Rapport
+          </a>
+        ) : null}
         {user ? (
           <a
             href="/mes-vie"

@@ -8,6 +8,11 @@ import {
   type EmbedJobOffersResult
 } from "./run-embed-job-offers";
 import {
+  runMatchJobOffers,
+  type MatchJobOffersOptions,
+  type MatchJobOffersResult
+} from "./run-match-job-offers";
+import {
   runStructureJobOffers,
   type StructureJobOffersOptions,
   type StructureJobOffersResult
@@ -17,6 +22,7 @@ export type JobOfferPipelineOptions = {
   scrape?: BusinessFranceScrapeOptions;
   structure?: StructureJobOffersOptions;
   embed?: EmbedJobOffersOptions;
+  match?: MatchJobOffersOptions;
   log?: (message: string) => void;
 };
 
@@ -25,13 +31,17 @@ export type JobOfferPipelineResult = {
   scrape: Awaited<ReturnType<typeof runBusinessFranceScrape>>;
   structure: StructureJobOffersResult | null;
   embed: EmbedJobOffersResult | null;
+  match: MatchJobOffersResult | null;
   errors: string[];
 };
 
 function mergeStatus(result: JobOfferPipelineResult): JobOfferPipelineResult["status"] {
-  const statuses = [result.scrape.status, result.structure?.status, result.embed?.status].filter(
-    (status): status is Exclude<typeof status, undefined> => status !== undefined
-  );
+  const statuses = [
+    result.scrape.status,
+    result.structure?.status,
+    result.embed?.status,
+    result.match?.status
+  ].filter((status): status is Exclude<typeof status, undefined> => status !== undefined);
 
   if (statuses.includes("failed")) {
     return "failed";
@@ -49,7 +59,8 @@ function collectErrors(result: JobOfferPipelineResult): string[] {
   return [
     ...result.scrape.errors,
     ...(result.structure?.errors ?? []),
-    ...(result.embed?.errors ?? [])
+    ...(result.embed?.errors ?? []),
+    ...(result.match?.errors ?? [])
   ];
 }
 
@@ -70,6 +81,7 @@ export async function runJobOfferPipeline(
     scrape,
     structure: null,
     embed: null,
+    match: null,
     errors: []
   };
 
@@ -103,6 +115,14 @@ export async function runJobOfferPipeline(
     ...options.embed,
     log: options.embed?.log ?? options.log
   });
+
+  // Matching après l'embedding des offres : nécessite les vecteurs à jour.
+  // Échec toléré (dégradation gracieuse, comme l'embedding).
+  result.match = await runMatchJobOffers({
+    ...options.match,
+    log: options.match?.log ?? options.log
+  });
+
   result.status = mergeStatus(result);
   result.errors = collectErrors(result);
   options.log?.(`[pipeline] done: status=${result.status}, errors=${result.errors.length}`);

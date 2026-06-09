@@ -17,10 +17,12 @@
     "typecheck": "turbo typecheck",
     "db:generate": "pnpm --filter @agentic-cv/db db:generate",
     "db:migrate": "pnpm --filter @agentic-cv/db db:migrate",
+    "db:deploy": "pnpm --filter @agentic-cv/db db:deploy",
     "pipeline:job-offers": "pnpm --filter @agentic-cv/worker pipeline:job-offers",
     "scrape:business-france": "pnpm --filter @agentic-cv/worker scrape:business-france",
     "structure:job-offers": "pnpm --filter @agentic-cv/worker structure:job-offers",
-    "embed:job-offers": "pnpm --filter @agentic-cv/worker embed:job-offers"
+    "embed:job-offers": "pnpm --filter @agentic-cv/worker embed:job-offers",
+    "match:job-offers": "pnpm --filter @agentic-cv/worker match:job-offers"
   },
   "devDependencies": {
     "@eslint/js": "^9",
