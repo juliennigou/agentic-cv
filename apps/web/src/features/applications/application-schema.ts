@@ -1,8 +1,14 @@
-import type { APPLICATION_ARTIFACT_KINDS } from "@agentic-cv/db";
+import type { APPLICATION_ARTIFACT_KINDS, APPLICATION_LANGUAGES } from "@agentic-cv/db";
 import { z } from "zod";
 
 /** Type de document, dérivé du tuple exporté par le repo (pas de dépendance Prisma côté web). */
 export type ApplicationArtifactKind = (typeof APPLICATION_ARTIFACT_KINDS)[number];
+
+/** Langue des documents (versions FR/EN), dérivée du tuple exporté par le repo. */
+export type ApplicationLanguage = (typeof APPLICATION_LANGUAGES)[number];
+
+/** Champ langue validé : seules `fr` et `en` sont acceptées, défaut `fr`. */
+const languageField = z.enum(["fr", "en"]).default("fr");
 
 /** Taille max d'un contenu collé (garde-fou anti-payload, ~quelques pages). */
 const CONTENT_MAX = 20000;
@@ -32,6 +38,7 @@ export const prepareApplicationSchema = z.object({
 /** Enregistrement d'un brouillon : contenus facultatifs (travail en cours). */
 export const applicationDraftSchema = z.object({
   applicationId: z.string().uuid(),
+  language: languageField,
   chatgptConversationUrl: conversationUrlField,
   targetedResume: contentField,
   coverLetter: contentField,

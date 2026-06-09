@@ -35,6 +35,24 @@ export {
   type SaveResumeInput
 } from "./repositories/user-profile-repository";
 export {
+  listProfilesNeedingEmbedding,
+  setProfileEmbedding,
+  type ProfileNeedingEmbedding
+} from "./repositories/user-profile-embedding-repository";
+export {
+  upsertJobOfferMatches,
+  listRecentMatchesForUser,
+  listProfileMatches,
+  countProfileMatches,
+  type RecentMatch,
+  type ListRecentMatchesOptions,
+  type ProfileMatch,
+  type ProfileMatchFilters,
+  type ListProfileMatchesOptions,
+  type ProfileMatchesPage,
+  type ProfileMatchCounts
+} from "./repositories/job-offer-match-repository";
+export {
   createUserDocument,
   listUserDocuments,
   getLatestBaseResume,
@@ -59,6 +77,7 @@ export {
 } from "./repositories/scrape-run-repository";
 export {
   APPLICATION_ARTIFACT_KINDS,
+  APPLICATION_LANGUAGES,
   createOrGetApplicationWorkspace,
   getApplicationWorkspace,
   saveApplicationDraft,

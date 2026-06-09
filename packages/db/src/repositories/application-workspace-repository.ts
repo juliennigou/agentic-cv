@@ -1,6 +1,7 @@
 import type {
   ApplicationArtifactKind,
   ApplicationArtifactStatus,
+  ApplicationLanguage,
   ApplicationStatus
 } from "@prisma/client";
 
@@ -13,6 +14,9 @@ export const APPLICATION_ARTIFACT_KINDS = [
   "cover_letter",
   "recruiter_message"
 ] as const satisfies readonly ApplicationArtifactKind[];
+
+/** Langues disponibles pour les documents (versions FR/EN stockées séparément). */
+export const APPLICATION_LANGUAGES = ["fr", "en"] as const satisfies readonly ApplicationLanguage[];
 
 const workspaceOfferSelect = {
   id: true,
@@ -63,12 +67,17 @@ export type ApplicationWorkspace = {
     languages: string[];
     resumeData: unknown;
   };
-  artifacts: Record<ApplicationArtifactKind, ApplicationWorkspaceArtifact>;
+  // Artefacts indexés par langue puis par type : on peut avoir un jeu FR et un jeu EN.
+  artifacts: Record<
+    ApplicationLanguage,
+    Record<ApplicationArtifactKind, ApplicationWorkspaceArtifact>
+  >;
 };
 
 export type SaveApplicationDraftInput = {
   userId: string;
   applicationId: string;
+  language: ApplicationLanguage;
   chatgptConversationUrl?: string | null;
   artifacts: Array<{ kind: ApplicationArtifactKind; contentText: string }>;
 };
@@ -76,6 +85,7 @@ export type SaveApplicationDraftInput = {
 export type ValidateApplicationWorkspaceInput = {
   userId: string;
   applicationId: string;
+  language: ApplicationLanguage;
 };
 
 /**
@@ -126,7 +136,7 @@ export async function getApplicationWorkspace(input: {
       validatedAt: true,
       jobOffer: { select: workspaceOfferSelect },
       artifacts: {
-        select: { kind: true, contentText: true, status: true, validatedAt: true }
+        select: { kind: true, language: true, contentText: true, status: true, validatedAt: true }
       }
     }
   });
@@ -137,22 +147,27 @@ export async function getApplicationWorkspace(input: {
 
   const profile = await getOrCreateUserProfile({ userId: input.userId });
 
-  const artifactByKind = new Map(
-    application.artifacts.map((artifact) => [artifact.kind, artifact])
+  const artifactByLanguageAndKind = new Map(
+    application.artifacts.map((artifact) => [`${artifact.language}:${artifact.kind}`, artifact])
   );
   const artifacts = Object.fromEntries(
-    APPLICATION_ARTIFACT_KINDS.map((kind) => {
-      const artifact = artifactByKind.get(kind);
-      return [
-        kind,
-        {
-          contentText: artifact?.contentText ?? null,
-          status: artifact?.status ?? "draft",
-          validatedAt: artifact?.validatedAt ?? null
-        } satisfies ApplicationWorkspaceArtifact
-      ];
+    APPLICATION_LANGUAGES.map((language) => {
+      const byKind = Object.fromEntries(
+        APPLICATION_ARTIFACT_KINDS.map((kind) => {
+          const artifact = artifactByLanguageAndKind.get(`${language}:${kind}`);
+          return [
+            kind,
+            {
+              contentText: artifact?.contentText ?? null,
+              status: artifact?.status ?? "draft",
+              validatedAt: artifact?.validatedAt ?? null
+            } satisfies ApplicationWorkspaceArtifact
+          ];
+        })
+      ) as Record<ApplicationArtifactKind, ApplicationWorkspaceArtifact>;
+      return [language, byKind];
     })
-  ) as Record<ApplicationArtifactKind, ApplicationWorkspaceArtifact>;
+  ) as Record<ApplicationLanguage, Record<ApplicationArtifactKind, ApplicationWorkspaceArtifact>>;
 
   return {
     id: application.id,
@@ -192,12 +207,17 @@ export async function saveApplicationDraft(input: SaveApplicationDraftInput): Pr
       const status: ApplicationArtifactStatus = trimmed.length > 0 ? "pasted" : "draft";
       return prisma.applicationArtifact.upsert({
         where: {
-          applicationId_kind: { applicationId: input.applicationId, kind: artifact.kind }
+          applicationId_kind_language: {
+            applicationId: input.applicationId,
+            kind: artifact.kind,
+            language: input.language
+          }
         },
         update: { contentText: trimmed, status },
         create: {
           applicationId: input.applicationId,
           kind: artifact.kind,
+          language: input.language,
           contentText: trimmed,
           status
         }
@@ -216,7 +236,7 @@ export async function validateApplicationWorkspace(
   await assertApplicationOwnership(input.userId, input.applicationId);
 
   const artifacts = await prisma.applicationArtifact.findMany({
-    where: { applicationId: input.applicationId },
+    where: { applicationId: input.applicationId, language: input.language },
     select: { kind: true, contentText: true }
   });
   const filledKinds = new Set(
@@ -236,7 +256,7 @@ export async function validateApplicationWorkspace(
       data: { status: "completed", validatedAt: now }
     }),
     prisma.applicationArtifact.updateMany({
-      where: { applicationId: input.applicationId },
+      where: { applicationId: input.applicationId, language: input.language },
       data: { status: "validated", validatedAt: now }
     })
   ]);

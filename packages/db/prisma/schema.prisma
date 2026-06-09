@@ -48,6 +48,11 @@ enum ApplicationArtifactStatus {
   validated
 }
 
+enum ApplicationLanguage {
+  fr
+  en
+}
+
 model UserProfile {
   id              String   @id @default(uuid()) @db.Uuid
   userId          String   @unique @map("user_id") @db.Uuid
@@ -62,12 +67,18 @@ model UserProfile {
   // CV structuré (éducation, expériences, projets…) extrait du PDF déposé.
   // Forme validée par `resumeSchema` (@agentic-cv/shared) à la frontière.
   resumeData      Json?    @map("resume_data")
+  // Embedding sémantique du profil (1536 dim) ; accès uniquement via $queryRaw/$executeRaw.
+  embedding       Unsupported("vector(1536)")?
+  // Horodatage du dernier calcul d'embedding ; profil à ré-embarquer quand
+  // `updated_at > embedding_updated_at` (ou l'un des deux est NULL).
+  embeddingUpdatedAt DateTime? @map("embedding_updated_at")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
   documents    UserDocument[]
   savedJobs    SavedJob[]
   applications Application[]
+  matches      JobMatch[]
 
   @@map("user_profiles")
 }
@@ -133,6 +144,7 @@ model JobOffer {
 
   savedJobs    SavedJob[]
   applications Application[]
+  matches      JobMatch[]
 
   @@unique([source, externalId])
   @@unique([source, sourceUrl])
@@ -184,6 +196,22 @@ model SavedJob {
   @@map("saved_jobs")
 }
 
+model JobMatch {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  jobOfferId String   @map("job_offer_id") @db.Uuid
+  // Similarité cosinus 0–1 (1 - distance) entre embedding profil et embedding offre.
+  score      Float
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user     UserProfile @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  jobOffer JobOffer    @relation(fields: [jobOfferId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jobOfferId])
+  @@index([userId, createdAt])
+  @@map("job_matches")
+}
+
 model Application {
   id                    String            @id @default(uuid()) @db.Uuid
   userId                String            @map("user_id") @db.Uuid
@@ -210,6 +238,8 @@ model ApplicationArtifact {
   id            String                    @id @default(uuid()) @db.Uuid
   applicationId String                    @map("application_id") @db.Uuid
   kind          ApplicationArtifactKind
+  // Langue du document produit (versions FR/EN stockées indépendamment).
+  language      ApplicationLanguage       @default(fr)
   // Contenu texte recollé depuis ChatGPT (CV ciblé / lettre / message).
   contentText   String?                   @map("content_text")
   status        ApplicationArtifactStatus @default(draft)
@@ -219,7 +249,7 @@ model ApplicationArtifact {
 
   application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 
-  @@unique([applicationId, kind])
+  @@unique([applicationId, kind, language])
   @@index([applicationId])
   @@map("application_artifacts")
 }

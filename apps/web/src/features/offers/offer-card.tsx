@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
+import { prepareApplication } from "@/features/applications/actions";
+
 import { toggleFavoriteJob } from "./actions";
 import {
   excerpt,
@@ -60,9 +62,13 @@ export function OfferCard({ offer, returnTo }: { offer: OfferListItem; returnTo:
 
       <div className="flex items-center justify-between gap-3">
         <Badge variant={status ? "accent" : "default"}>{formatOfferStatus(status)}</Badge>
-        <Button variant="ghost" size="sm" asChild>
-          <a href={`/offres/${offer.id}`}>Préparer ma candidature</a>
-        </Button>
+        <form action={prepareApplication}>
+          <input type="hidden" name="jobOfferId" value={offer.id} />
+          <input type="hidden" name="returnTo" value={returnTo} />
+          <Button variant="ghost" size="sm" type="submit">
+            Préparer ma candidature
+          </Button>
+        </form>
       </div>
 
       <div className="flex items-center justify-between gap-3">
