@@ -124,10 +124,18 @@ export type ProfileMatch = {
 };
 
 export type ListProfileMatchesOptions = {
+  /** Restreint aux offres récentes (fenêtre « nouvelles offres »). */
+  onlyNew?: boolean;
   /** Pagination : nombre de matchs par page (défaut : 20). */
   limit?: number;
   /** Pagination : décalage (défaut : 0). */
   offset?: number;
+};
+
+/** Totaux par onglet du rapport (toutes offres vs. nouveautés). */
+export type ProfileMatchCounts = {
+  all: number;
+  recent: number;
 };
 
 export type ProfileMatchesPage = {
@@ -156,6 +164,9 @@ export async function listProfileMatches(
 ): Promise<ProfileMatchesPage> {
   const limit = options.limit ?? DEFAULT_PROFILE_MATCH_LIMIT;
   const offset = options.offset ?? 0;
+  const newFilter = options.onlyNew
+    ? Prisma.sql`AND o.first_seen_at >= now() - make_interval(hours => ${num(NEW_OFFER_WINDOW_HOURS)})`
+    : Prisma.empty;
 
   const rows = await prisma.$queryRaw<ProfileMatchRow[]>(Prisma.sql`
     SELECT
@@ -176,6 +187,7 @@ export async function listProfileMatches(
       AND o.embedding IS NOT NULL
     WHERE p.user_id = ${userId}::uuid
       AND p.embedding IS NOT NULL
+      ${newFilter}
     ORDER BY score DESC, o.first_seen_at DESC
     LIMIT ${num(limit)} OFFSET ${num(offset)}
   `);
@@ -183,4 +195,23 @@ export async function listProfileMatches(
   const total = rows[0]?.total ?? 0;
   const items = rows.map(({ total: _total, ...match }) => match);
   return { items, total };
+}
+
+/** Totaux par onglet (toutes les offres actives vs. nouveautés des 24 h). */
+export async function countProfileMatches(userId: string): Promise<ProfileMatchCounts> {
+  const rows = await prisma.$queryRaw<ProfileMatchCounts[]>(Prisma.sql`
+    SELECT
+      count(*)::int AS all,
+      count(*) FILTER (
+        WHERE o.first_seen_at >= now() - make_interval(hours => ${num(NEW_OFFER_WINDOW_HOURS)})
+      )::int AS recent
+    FROM user_profiles p
+    JOIN job_offers o
+      ON o.is_active
+      AND o.embedding IS NOT NULL
+    WHERE p.user_id = ${userId}::uuid
+      AND p.embedding IS NOT NULL
+  `);
+
+  return rows[0] ?? { all: 0, recent: 0 };
 }

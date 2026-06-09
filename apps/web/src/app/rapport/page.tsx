@@ -7,7 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { prepareApplication } from "@/features/applications/actions";
 import { getCurrentUser } from "@/features/auth/current-user";
-import { getMatchReport, parseReportPage, type ReportMatch } from "@/features/offers/match-report";
+import {
+  getMatchCounts,
+  getMatchReport,
+  parseReportPage,
+  parseReportTab,
+  type ReportMatch,
+  type ReportTab
+} from "@/features/offers/match-report";
 import { formatDuration, formatLocation } from "@/features/offers/offer-view";
 
 export const dynamic = "force-dynamic";
@@ -25,12 +32,18 @@ export default async function RapportPage({ searchParams }: RapportPageProps) {
     redirect("/connexion?next=/rapport");
   }
 
-  const requestedPage = parseReportPage((await searchParams).page);
-  const report = await getMatchReport(user.id, requestedPage);
+  const params = await searchParams;
+  const tab = parseReportTab(params.tab);
+  const requestedPage = parseReportPage(params.page);
+
+  const [counts, report] = await Promise.all([
+    getMatchCounts(user.id),
+    getMatchReport(user.id, tab, requestedPage)
+  ]);
 
   // Page hors bornes (ex. lien obsolète) → on recale sur la dernière page.
   if (report.total > 0 && requestedPage > report.totalPages) {
-    redirect(`/rapport?page=${report.totalPages}`);
+    redirect(`/rapport?tab=${tab}&page=${report.totalPages}`);
   }
 
   return (
@@ -43,16 +56,93 @@ export default async function RapportPage({ searchParams }: RapportPageProps) {
           Offres qui te correspondent
         </h1>
         <span className="font-mono text-sm tracking-[0.02em] text-muted-foreground">
-          <strong className="text-foreground">{report.total}</strong> offre
-          {report.total > 1 ? "s" : ""} active{report.total > 1 ? "s" : ""} classée
-          {report.total > 1 ? "s" : ""} par pertinence avec ton profil — les meilleures
-          correspondances d'abord. Les nouveautés des dernières 24 h sont signalées.
+          Tes offres classées par pertinence avec ton profil — les meilleures correspondances
+          d&apos;abord.
         </span>
       </header>
 
+      <TabBar tab={tab} recentCount={counts.recent} allCount={counts.all} />
+
       {report.items.length === 0 ? (
-        <div className="rounded-md border border-dashed border-[var(--border-strong)] bg-card p-6 leading-normal text-muted-foreground">
-          Aucune offre pertinente pour l'instant. Complète ton{" "}
+        <EmptyState tab={tab} />
+      ) : (
+        <>
+          <section className="mt-4 grid gap-3">
+            {report.items.map((match) => (
+              <MatchCard key={match.jobOfferId} match={match} />
+            ))}
+          </section>
+
+          <Pagination tab={tab} page={report.page} totalPages={report.totalPages} />
+        </>
+      )}
+    </main>
+  );
+}
+
+function TabBar({
+  tab,
+  recentCount,
+  allCount
+}: {
+  tab: ReportTab;
+  recentCount: number;
+  allCount: number;
+}) {
+  return (
+    <nav
+      className="inline-flex h-11 items-center justify-center gap-1 rounded-sm border border-border bg-secondary p-1 text-muted-foreground"
+      aria-label="Filtrer le rapport"
+    >
+      <TabLink tab="recent" active={tab === "recent"} label="Dernières 24 h" count={recentCount} />
+      <TabLink tab="all" active={tab === "all"} label="Toutes mes offres" count={allCount} />
+    </nav>
+  );
+}
+
+function TabLink({
+  tab,
+  active,
+  label,
+  count
+}: {
+  tab: ReportTab;
+  active: boolean;
+  label: string;
+  count: number;
+}) {
+  const base =
+    "inline-flex h-full items-center justify-center whitespace-nowrap rounded-sm px-4 font-mono text-sm font-medium tracking-[0.02em] transition-colors";
+  const state = active
+    ? "bg-card text-foreground shadow-sm"
+    : "text-muted-foreground hover:text-foreground";
+
+  return (
+    <a
+      href={`/rapport?tab=${tab}`}
+      aria-current={active ? "page" : undefined}
+      className={`${base} ${state}`}
+    >
+      {label}
+      <span className="ml-2 text-[var(--faint)]">{count}</span>
+    </a>
+  );
+}
+
+function EmptyState({ tab }: { tab: ReportTab }) {
+  return (
+    <div className="mt-4 rounded-md border border-dashed border-[var(--border-strong)] bg-card p-6 leading-normal text-muted-foreground">
+      {tab === "recent" ? (
+        <>
+          Aucune nouvelle offre dans les dernières 24 h. Reviens demain, ou consulte{" "}
+          <a className="text-[var(--accent)] hover:underline" href="/rapport?tab=all">
+            toutes tes offres
+          </a>
+          .
+        </>
+      ) : (
+        <>
+          Aucune offre à classer pour l&apos;instant. Complète ton{" "}
           <a className="text-[var(--accent)] hover:underline" href="/compte">
             profil et ton CV
           </a>{" "}
@@ -61,19 +151,9 @@ export default async function RapportPage({ searchParams }: RapportPageProps) {
             toutes les offres
           </a>
           .
-        </div>
-      ) : (
-        <>
-          <section className="grid gap-3">
-            {report.items.map((match) => (
-              <MatchCard key={match.jobOfferId} match={match} />
-            ))}
-          </section>
-
-          <Pagination page={report.page} totalPages={report.totalPages} />
         </>
       )}
-    </main>
+    </div>
   );
 }
 
@@ -129,13 +209,22 @@ function MatchCard({ match }: { match: ReportMatch }) {
   );
 }
 
-function Pagination({ page, totalPages }: { page: number; totalPages: number }) {
+function Pagination({
+  tab,
+  page,
+  totalPages
+}: {
+  tab: ReportTab;
+  page: number;
+  totalPages: number;
+}) {
   if (totalPages <= 1) {
     return null;
   }
 
   const hasPrev = page > 1;
   const hasNext = page < totalPages;
+  const href = (target: number) => `/rapport?tab=${tab}&page=${target}`;
 
   return (
     <nav
@@ -143,13 +232,13 @@ function Pagination({ page, totalPages }: { page: number; totalPages: number }) 
       aria-label="Pagination du rapport"
     >
       <Button asChild={hasPrev} variant="outline" size="sm" disabled={!hasPrev}>
-        {hasPrev ? <a href={`/rapport?page=${page - 1}`}>← Précédent</a> : <span>← Précédent</span>}
+        {hasPrev ? <a href={href(page - 1)}>← Précédent</a> : <span>← Précédent</span>}
       </Button>
       <span className="font-mono text-sm tracking-[0.02em] text-muted-foreground">
         Page {page} / {totalPages}
       </span>
       <Button asChild={hasNext} variant="outline" size="sm" disabled={!hasNext}>
-        {hasNext ? <a href={`/rapport?page=${page + 1}`}>Suivant →</a> : <span>Suivant →</span>}
+        {hasNext ? <a href={href(page + 1)}>Suivant →</a> : <span>Suivant →</span>}
       </Button>
     </nav>
   );

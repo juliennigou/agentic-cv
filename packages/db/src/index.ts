@@ -43,11 +43,13 @@ export {
   upsertJobOfferMatches,
   listRecentMatchesForUser,
   listProfileMatches,
+  countProfileMatches,
   type RecentMatch,
   type ListRecentMatchesOptions,
   type ProfileMatch,
   type ListProfileMatchesOptions,
-  type ProfileMatchesPage
+  type ProfileMatchesPage,
+  type ProfileMatchCounts
 } from "./repositories/job-offer-match-repository";
 export {
   createUserDocument,
