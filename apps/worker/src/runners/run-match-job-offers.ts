@@ -23,6 +23,8 @@ export type MatchJobOffersResult = {
 };
 
 const DEFAULT_BATCH_SIZE = 50;
+/** Plafond de profils récupérés en un run (filet de sécurité, pas une pagination). */
+const DEFAULT_MAX_PROFILES = 1000;
 
 type EmbeddingField = {
   label: string;
@@ -79,40 +81,49 @@ async function embedPendingProfiles(
   result: MatchJobOffersResult
 ): Promise<void> {
   const batchSize = options.batchSize ?? DEFAULT_BATCH_SIZE;
+  const fetchLimit = options.maxProfiles ?? DEFAULT_MAX_PROFILES;
 
-  for (;;) {
-    const remaining =
-      options.maxProfiles !== undefined
-        ? options.maxProfiles - result.profilesEmbedded
-        : Number.POSITIVE_INFINITY;
-    if (remaining <= 0) {
-      break;
-    }
+  const profiles = await listProfilesNeedingEmbedding(fetchLimit);
+  if (profiles.length === 0) {
+    options.log?.("[match] no profile pending embedding");
+    return;
+  }
 
-    const limit = Math.min(batchSize, remaining);
-    const profiles = await listProfilesNeedingEmbedding(limit);
-    if (profiles.length === 0) {
-      options.log?.("[match] no profile pending embedding");
-      break;
-    }
+  // Profils sans signal exploitable (ni rôles/compétences ni CV) : leur texte
+  // d'embedding est vide et LiteLLM rejette les chaînes vides. On les ignore —
+  // rien à matcher sans contenu — sans bloquer les profils embarquables du lot.
+  const embeddable = profiles
+    .map((profile) => ({ profile, text: buildProfileEmbeddingText(profile) }))
+    .filter((entry) => entry.text.trim().length > 0);
 
+  const skipped = profiles.length - embeddable.length;
+  if (skipped > 0) {
+    options.log?.(`[match] skipping ${skipped} profile(s) without embeddable content`);
+  }
+  if (embeddable.length === 0) {
+    return;
+  }
+
+  for (let start = 0; start < embeddable.length; start += batchSize) {
+    const batch = embeddable.slice(start, start + batchSize);
     try {
-      options.log?.(`[match] embedding ${profiles.length} profiles`);
-      const embeddings = await embedTexts(profiles.map(buildProfileEmbeddingText), {
-        taskType: "RETRIEVAL_DOCUMENT"
-      });
+      options.log?.(`[match] embedding ${batch.length} profiles`);
+      const embeddings = await embedTexts(
+        batch.map((entry) => entry.text),
+        { taskType: "RETRIEVAL_DOCUMENT" }
+      );
 
-      for (let index = 0; index < profiles.length; index += 1) {
-        await setProfileEmbedding(profiles[index].userId, embeddings[index]);
+      for (let index = 0; index < batch.length; index += 1) {
+        await setProfileEmbedding(batch[index].profile.userId, embeddings[index]);
       }
 
-      result.profilesEmbedded += profiles.length;
+      result.profilesEmbedded += batch.length;
     } catch (error) {
       // On stoppe au premier échec de lot pour ne pas marteler l'API ;
       // les profils restent à embarquer et seront retentés au prochain run.
       result.errors.push(error instanceof Error ? error.message : String(error));
       result.status = "partial_success";
-      options.log?.(`[match] profile embedding failed for ${profiles.length} profiles`);
+      options.log?.(`[match] profile embedding failed for ${batch.length} profiles`);
       break;
     }
   }
