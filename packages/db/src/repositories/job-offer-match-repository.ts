@@ -117,13 +117,24 @@ export type ProfileMatch = {
   city: string | null;
   contractType: string | null;
   durationMonths: number | null;
+  salary: string | null;
   sourceUrl: string;
   score: number;
   /** Offre vue pour la première fois dans la fenêtre « nouvelles offres ». */
   isNew: boolean;
+  /** L'offre est déjà dans les favoris de l'utilisateur. */
+  isSaved: boolean;
 };
 
-export type ListProfileMatchesOptions = {
+/** Filtres rapides communs au rapport (liste et comptage). */
+export type ProfileMatchFilters = {
+  /** Code pays ISO alpha-2 (optionnel). */
+  countryCode?: string | null;
+  /** Revenu mensuel minimal en euros (optionnel). */
+  minSalary?: number | null;
+};
+
+export type ListProfileMatchesOptions = ProfileMatchFilters & {
   /** Restreint aux offres récentes (fenêtre « nouvelles offres »). */
   onlyNew?: boolean;
   /** Pagination : nombre de matchs par page (défaut : 20). */
@@ -140,23 +151,52 @@ export type ProfileMatchCounts = {
 
 export type ProfileMatchesPage = {
   items: ProfileMatch[];
-  /** Nombre total de matchs au-dessus du seuil (toutes pages confondues). */
+  /** Nombre total de matchs (top 25 %) après filtres, toutes pages confondues. */
   total: number;
 };
 
 const DEFAULT_PROFILE_MATCH_LIMIT = 20;
+/** On ne retient que le quart le plus pertinent : score ≥ 75ᵉ percentile. */
+const TOP_PERCENTILE = 0.75;
 
 type ProfileMatchRow = ProfileMatch & { total: number };
 
+/** Montant numérique extrait du salaire texte (« 2607.35 EUR » → 2607.35). */
+const salaryAmount = Prisma.sql`NULLIF(regexp_replace(o.salary, '[^0-9.]', '', 'g'), '')::numeric`;
+
+/** Fragment WHERE des filtres pays / revenu (partagé liste ↔ comptage). */
+function buildMatchFilters(filters: ProfileMatchFilters): Prisma.Sql {
+  const parts: Prisma.Sql[] = [];
+  if (filters.countryCode) {
+    parts.push(Prisma.sql`AND o.country_code = ${filters.countryCode}`);
+  }
+  if (typeof filters.minSalary === "number") {
+    parts.push(Prisma.sql`AND ${salaryAmount} >= ${num(filters.minSalary)}`);
+  }
+  return parts.length > 0 ? Prisma.join(parts, " ") : Prisma.empty;
+}
+
 /**
- * Classement personnalisé de **toutes** les offres actives (pas seulement les
- * récentes) par similarité avec l'embedding du profil, paginé — les meilleures
- * correspondances d'abord.
- *
- * Pas de seuil ici : les similarités de l'espace d'embedding sont resserrées,
- * donc un cutoff est fragile ; le classement porte le signal et la pagination
- * gère le volume. `count(*) OVER ()` renvoie le total (avant LIMIT/OFFSET).
- * Renvoie une page vide si le profil n'a pas encore d'embedding.
+ * Seuil de pertinence du rapport : score au 75ᵉ percentile de TOUTES les offres
+ * actives pour ce profil. On ne garde que le quart supérieur (top 25 %), de
+ * façon stable quels que soient les filtres pays/revenu appliqués ensuite.
+ */
+const cutoffCte = (userId: string) => Prisma.sql`
+  cutoff AS (
+    SELECT percentile_cont(${num(TOP_PERCENTILE)}) WITHIN GROUP (
+      ORDER BY 1 - (p.embedding <=> o.embedding)
+    ) AS min_score
+    FROM user_profiles p
+    JOIN job_offers o ON o.is_active AND o.embedding IS NOT NULL
+    WHERE p.user_id = ${userId}::uuid AND p.embedding IS NOT NULL
+  )
+`;
+
+/**
+ * Classement personnalisé des offres actives par similarité avec le profil,
+ * restreint au top 25 % le plus pertinent, filtrable (pays/revenu) et paginé —
+ * les meilleures correspondances d'abord. `count(*) OVER ()` renvoie le total
+ * filtré (avant LIMIT/OFFSET). Page vide si le profil n'a pas d'embedding.
  */
 export async function listProfileMatches(
   userId: string,
@@ -167,8 +207,10 @@ export async function listProfileMatches(
   const newFilter = options.onlyNew
     ? Prisma.sql`AND o.first_seen_at >= now() - make_interval(hours => ${num(NEW_OFFER_WINDOW_HOURS)})`
     : Prisma.empty;
+  const filters = buildMatchFilters(options);
 
   const rows = await prisma.$queryRaw<ProfileMatchRow[]>(Prisma.sql`
+    WITH ${cutoffCte(userId)}
     SELECT
       o.id::text AS "jobOfferId",
       o.title,
@@ -177,17 +219,23 @@ export async function listProfileMatches(
       o.city,
       o.contract_type AS "contractType",
       o.duration_months AS "durationMonths",
+      o.salary,
       o.source_url AS "sourceUrl",
       (1 - (p.embedding <=> o.embedding))::float8 AS score,
       (o.first_seen_at >= now() - make_interval(hours => ${num(NEW_OFFER_WINDOW_HOURS)})) AS "isNew",
+      EXISTS (
+        SELECT 1 FROM saved_jobs s
+        WHERE s.user_id = p.user_id AND s.job_offer_id = o.id
+      ) AS "isSaved",
       (count(*) OVER ())::int AS total
     FROM user_profiles p
-    JOIN job_offers o
-      ON o.is_active
-      AND o.embedding IS NOT NULL
+    JOIN job_offers o ON o.is_active AND o.embedding IS NOT NULL
+    CROSS JOIN cutoff c
     WHERE p.user_id = ${userId}::uuid
       AND p.embedding IS NOT NULL
+      AND (1 - (p.embedding <=> o.embedding)) >= c.min_score
       ${newFilter}
+      ${filters}
     ORDER BY score DESC, o.first_seen_at DESC
     LIMIT ${num(limit)} OFFSET ${num(offset)}
   `);
@@ -197,20 +245,30 @@ export async function listProfileMatches(
   return { items, total };
 }
 
-/** Totaux par onglet (toutes les offres actives vs. nouveautés des 24 h). */
-export async function countProfileMatches(userId: string): Promise<ProfileMatchCounts> {
+/**
+ * Totaux par onglet (toutes vs. nouveautés des 24 h) dans le top 25 % pertinent,
+ * après application des filtres pays/revenu — pour des compteurs d'onglets justes.
+ */
+export async function countProfileMatches(
+  userId: string,
+  filters: ProfileMatchFilters = {}
+): Promise<ProfileMatchCounts> {
+  const filterSql = buildMatchFilters(filters);
+
   const rows = await prisma.$queryRaw<ProfileMatchCounts[]>(Prisma.sql`
+    WITH ${cutoffCte(userId)}
     SELECT
       count(*)::int AS all,
       count(*) FILTER (
         WHERE o.first_seen_at >= now() - make_interval(hours => ${num(NEW_OFFER_WINDOW_HOURS)})
       )::int AS recent
     FROM user_profiles p
-    JOIN job_offers o
-      ON o.is_active
-      AND o.embedding IS NOT NULL
+    JOIN job_offers o ON o.is_active AND o.embedding IS NOT NULL
+    CROSS JOIN cutoff c
     WHERE p.user_id = ${userId}::uuid
       AND p.embedding IS NOT NULL
+      AND (1 - (p.embedding <=> o.embedding)) >= c.min_score
+      ${filterSql}
   `);
 
   return rows[0] ?? { all: 0, recent: 0 };

@@ -4,14 +4,24 @@ import {
   countProfileMatches,
   listProfileMatches,
   type ProfileMatch,
-  type ProfileMatchCounts
+  type ProfileMatchCounts,
+  type ProfileMatchFilters
 } from "@agentic-cv/db";
 
 /** Nombre de matchs affichés par page. */
 export const MATCH_REPORT_PAGE_SIZE = 20;
 
+/** Tranches de revenu mensuel minimal (€) proposées en filtre rapide. */
+export const SALARY_FILTER_STEPS = [2000, 2500, 3000, 3500, 4000] as const;
+
 /** Onglets du rapport : nouveautés des 24 h vs. ensemble du catalogue. */
 export type ReportTab = "recent" | "all";
+
+/** Filtres rapides résolus depuis les query params. */
+export type ReportFilters = {
+  countryCode: string | null;
+  minSalary: number | null;
+};
 
 /** Match enrichi pour l'affichage : score normalisé en pourcentage entier. */
 export type ReportMatch = ProfileMatch & {
@@ -41,22 +51,52 @@ export function parseReportPage(raw: string | string[] | undefined): number {
   return Number.isFinite(parsed) && parsed > 1 ? parsed : 1;
 }
 
-/** Totaux des deux onglets, pour les libellés. */
-export function getMatchCounts(userId: string): Promise<ProfileMatchCounts> {
-  return countProfileMatches(userId);
+/** Normalise les filtres rapides (pays ISO alpha-2, revenu minimal). */
+export function parseReportFilters(
+  params: Record<string, string | string[] | undefined>
+): ReportFilters {
+  const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
+
+  const country = first(params.country).trim().toUpperCase();
+  const minSalaryRaw = Number.parseInt(first(params.minSalary), 10);
+  const minSalary = SALARY_FILTER_STEPS.includes(
+    minSalaryRaw as (typeof SALARY_FILTER_STEPS)[number]
+  )
+    ? minSalaryRaw
+    : null;
+
+  return {
+    countryCode: country.length > 0 ? country : null,
+    minSalary
+  };
+}
+
+function toDbFilters(filters: ReportFilters): ProfileMatchFilters {
+  return { countryCode: filters.countryCode, minSalary: filters.minSalary };
+}
+
+/** Totaux des deux onglets (top 25 %, filtres appliqués), pour les libellés. */
+export function getMatchCounts(
+  userId: string,
+  filters: ReportFilters
+): Promise<ProfileMatchCounts> {
+  return countProfileMatches(userId, toDbFilters(filters));
 }
 
 /**
- * Rapport de matching d'un utilisateur, paginé et classé par pertinence.
- * Onglet `recent` : nouveautés des 24 h. Onglet `all` : tout le catalogue actif.
+ * Rapport de matching d'un utilisateur, restreint au top 25 % pertinent,
+ * paginé et classé. Onglet `recent` : nouveautés des 24 h. Onglet `all` : tout
+ * le catalogue actif. Les filtres pays/revenu s'appliquent dans les deux cas.
  */
 export async function getMatchReport(
   userId: string,
   tab: ReportTab,
-  page: number
+  page: number,
+  filters: ReportFilters
 ): Promise<MatchReport> {
   const pageSize = MATCH_REPORT_PAGE_SIZE;
   const { items, total } = await listProfileMatches(userId, {
+    ...toDbFilters(filters),
     onlyNew: tab === "recent",
     limit: pageSize,
     offset: (page - 1) * pageSize

@@ -49,6 +49,7 @@ export async function toggleFavoriteJob(formData: FormData) {
   revalidatePath("/offres");
   revalidatePath(`/offres/${parsed.jobOfferId}`);
   revalidatePath("/mes-vie");
+  revalidatePath("/rapport");
   redirect(returnTo);
 }
 

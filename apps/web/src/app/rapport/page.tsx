@@ -1,3 +1,5 @@
+import { listActiveOfferCountries } from "@agentic-cv/db";
+import { Star, StarOff } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { Eyebrow } from "@/components/eyebrow";
@@ -6,24 +8,42 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { prepareApplication } from "@/features/applications/actions";
+import { toggleFavoriteJob } from "@/features/offers/actions";
 import { getCurrentUser } from "@/features/auth/current-user";
 import {
   getMatchCounts,
   getMatchReport,
+  parseReportFilters,
   parseReportPage,
   parseReportTab,
+  type ReportFilters,
   type ReportMatch,
   type ReportTab
 } from "@/features/offers/match-report";
 import { formatDuration, formatLocation } from "@/features/offers/offer-view";
+import { ReportFilters as ReportFiltersBar } from "@/features/offers/report-filters";
 
 export const dynamic = "force-dynamic";
-
-const RETURN_TO = "/rapport";
 
 type RapportPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
+
+/** Construit une URL de rapport en conservant onglet, page et filtres. */
+function reportHref(state: { tab: ReportTab; page?: number; filters: ReportFilters }): string {
+  const params = new URLSearchParams();
+  params.set("tab", state.tab);
+  if (state.page && state.page > 1) {
+    params.set("page", String(state.page));
+  }
+  if (state.filters.countryCode) {
+    params.set("country", state.filters.countryCode);
+  }
+  if (state.filters.minSalary) {
+    params.set("minSalary", String(state.filters.minSalary));
+  }
+  return `/rapport?${params.toString()}`;
+}
 
 export default async function RapportPage({ searchParams }: RapportPageProps) {
   const user = await getCurrentUser();
@@ -35,16 +55,20 @@ export default async function RapportPage({ searchParams }: RapportPageProps) {
   const params = await searchParams;
   const tab = parseReportTab(params.tab);
   const requestedPage = parseReportPage(params.page);
+  const filters = parseReportFilters(params);
 
-  const [counts, report] = await Promise.all([
-    getMatchCounts(user.id),
-    getMatchReport(user.id, tab, requestedPage)
+  const [countries, counts, report] = await Promise.all([
+    listActiveOfferCountries(),
+    getMatchCounts(user.id, filters),
+    getMatchReport(user.id, tab, requestedPage, filters)
   ]);
 
   // Page hors bornes (ex. lien obsolète) → on recale sur la dernière page.
   if (report.total > 0 && requestedPage > report.totalPages) {
-    redirect(`/rapport?tab=${tab}&page=${report.totalPages}`);
+    redirect(reportHref({ tab, page: report.totalPages, filters }));
   }
+
+  const returnTo = reportHref({ tab, page: requestedPage, filters });
 
   return (
     <main className="mx-auto w-full max-w-[1120px] px-5 pb-16 pt-8">
@@ -56,24 +80,35 @@ export default async function RapportPage({ searchParams }: RapportPageProps) {
           Offres qui te correspondent
         </h1>
         <span className="font-mono text-sm tracking-[0.02em] text-muted-foreground">
-          Tes offres classées par pertinence avec ton profil — les meilleures correspondances
-          d&apos;abord.
+          Le quart le plus pertinent de tes offres, classé par correspondance avec ton profil — les
+          meilleures d&apos;abord.
         </span>
       </header>
 
-      <TabBar tab={tab} recentCount={counts.recent} allCount={counts.all} />
+      <TabBar tab={tab} filters={filters} recentCount={counts.recent} allCount={counts.all} />
+
+      <ReportFiltersBar
+        countries={countries}
+        countryCode={filters.countryCode}
+        minSalary={filters.minSalary}
+      />
 
       {report.items.length === 0 ? (
-        <EmptyState tab={tab} />
+        <EmptyState tab={tab} filters={filters} />
       ) : (
         <>
           <section className="mt-4 grid gap-3">
             {report.items.map((match) => (
-              <MatchCard key={match.jobOfferId} match={match} />
+              <MatchCard key={match.jobOfferId} match={match} returnTo={returnTo} />
             ))}
           </section>
 
-          <Pagination tab={tab} page={report.page} totalPages={report.totalPages} />
+          <Pagination
+            tab={tab}
+            page={report.page}
+            totalPages={report.totalPages}
+            filters={filters}
+          />
         </>
       )}
     </main>
@@ -82,10 +117,12 @@ export default async function RapportPage({ searchParams }: RapportPageProps) {
 
 function TabBar({
   tab,
+  filters,
   recentCount,
   allCount
 }: {
   tab: ReportTab;
+  filters: ReportFilters;
   recentCount: number;
   allCount: number;
 }) {
@@ -94,19 +131,29 @@ function TabBar({
       className="inline-flex h-11 items-center justify-center gap-1 rounded-sm border border-border bg-secondary p-1 text-muted-foreground"
       aria-label="Filtrer le rapport"
     >
-      <TabLink tab="recent" active={tab === "recent"} label="Dernières 24 h" count={recentCount} />
-      <TabLink tab="all" active={tab === "all"} label="Toutes mes offres" count={allCount} />
+      <TabLink
+        href={reportHref({ tab: "recent", filters })}
+        active={tab === "recent"}
+        label="Dernières 24 h"
+        count={recentCount}
+      />
+      <TabLink
+        href={reportHref({ tab: "all", filters })}
+        active={tab === "all"}
+        label="Toutes mes offres"
+        count={allCount}
+      />
     </nav>
   );
 }
 
 function TabLink({
-  tab,
+  href,
   active,
   label,
   count
 }: {
-  tab: ReportTab;
+  href: string;
   active: boolean;
   label: string;
   count: number;
@@ -118,24 +165,40 @@ function TabLink({
     : "text-muted-foreground hover:text-foreground";
 
   return (
-    <a
-      href={`/rapport?tab=${tab}`}
-      aria-current={active ? "page" : undefined}
-      className={`${base} ${state}`}
-    >
+    <a href={href} aria-current={active ? "page" : undefined} className={`${base} ${state}`}>
       {label}
       <span className="ml-2 text-[var(--faint)]">{count}</span>
     </a>
   );
 }
 
-function EmptyState({ tab }: { tab: ReportTab }) {
+function EmptyState({ tab, filters }: { tab: ReportTab; filters: ReportFilters }) {
+  const hasFilters = filters.countryCode !== null || filters.minSalary !== null;
+
+  if (hasFilters) {
+    return (
+      <div className="mt-4 rounded-md border border-dashed border-[var(--border-strong)] bg-card p-6 leading-normal text-muted-foreground">
+        Aucune offre ne correspond à ces filtres.{" "}
+        <a
+          className="text-[var(--accent)] hover:underline"
+          href={reportHref({ tab, filters: { countryCode: null, minSalary: null } })}
+        >
+          Réinitialiser les filtres
+        </a>
+        .
+      </div>
+    );
+  }
+
   return (
     <div className="mt-4 rounded-md border border-dashed border-[var(--border-strong)] bg-card p-6 leading-normal text-muted-foreground">
       {tab === "recent" ? (
         <>
-          Aucune nouvelle offre dans les dernières 24 h. Reviens demain, ou consulte{" "}
-          <a className="text-[var(--accent)] hover:underline" href="/rapport?tab=all">
+          Aucune nouvelle offre pertinente dans les dernières 24 h. Reviens demain, ou consulte{" "}
+          <a
+            className="text-[var(--accent)] hover:underline"
+            href={reportHref({ tab: "all", filters })}
+          >
             toutes tes offres
           </a>
           .
@@ -157,7 +220,7 @@ function EmptyState({ tab }: { tab: ReportTab }) {
   );
 }
 
-function MatchCard({ match }: { match: ReportMatch }) {
+function MatchCard({ match, returnTo }: { match: ReportMatch; returnTo: string }) {
   const location = formatLocation(match.city, match.country);
   const duration = formatDuration(match.durationMonths);
 
@@ -196,27 +259,64 @@ function MatchCard({ match }: { match: ReportMatch }) {
           {match.contractType ? <Badge variant="accent">{match.contractType}</Badge> : null}
           {location ? <Badge>{location}</Badge> : null}
           {duration ? <Badge>{duration}</Badge> : null}
+          {match.salary ? <Badge>{match.salary}</Badge> : null}
         </div>
-        <form action={prepareApplication}>
-          <input type="hidden" name="jobOfferId" value={match.jobOfferId} />
-          <input type="hidden" name="returnTo" value={RETURN_TO} />
-          <Button variant="outline" size="sm" type="submit" className="bg-card">
-            Préparer ma candidature
-          </Button>
-        </form>
+        <div className="flex shrink-0 items-center gap-2">
+          <FavoriteToggle
+            jobOfferId={match.jobOfferId}
+            isSaved={match.isSaved}
+            returnTo={returnTo}
+          />
+          <form action={prepareApplication}>
+            <input type="hidden" name="jobOfferId" value={match.jobOfferId} />
+            <input type="hidden" name="returnTo" value={returnTo} />
+            <Button variant="outline" size="sm" type="submit" className="bg-card">
+              Préparer ma candidature
+            </Button>
+          </form>
+        </div>
       </div>
     </Card>
+  );
+}
+
+function FavoriteToggle({
+  jobOfferId,
+  isSaved,
+  returnTo
+}: {
+  jobOfferId: string;
+  isSaved: boolean;
+  returnTo: string;
+}) {
+  return (
+    <form action={toggleFavoriteJob}>
+      <input type="hidden" name="jobOfferId" value={jobOfferId} />
+      <input type="hidden" name="intent" value={isSaved ? "remove" : "save"} />
+      <input type="hidden" name="returnTo" value={returnTo} />
+      <Button
+        variant="ghost"
+        size="sm"
+        type="submit"
+        title={isSaved ? "Retirer des favoris" : "Ajouter aux favoris"}
+      >
+        {isSaved ? <StarOff aria-hidden /> : <Star aria-hidden />}
+        {isSaved ? "Retirer" : "Favori"}
+      </Button>
+    </form>
   );
 }
 
 function Pagination({
   tab,
   page,
-  totalPages
+  totalPages,
+  filters
 }: {
   tab: ReportTab;
   page: number;
   totalPages: number;
+  filters: ReportFilters;
 }) {
   if (totalPages <= 1) {
     return null;
@@ -224,7 +324,6 @@ function Pagination({
 
   const hasPrev = page > 1;
   const hasNext = page < totalPages;
-  const href = (target: number) => `/rapport?tab=${tab}&page=${target}`;
 
   return (
     <nav
@@ -232,13 +331,21 @@ function Pagination({
       aria-label="Pagination du rapport"
     >
       <Button asChild={hasPrev} variant="outline" size="sm" disabled={!hasPrev}>
-        {hasPrev ? <a href={href(page - 1)}>← Précédent</a> : <span>← Précédent</span>}
+        {hasPrev ? (
+          <a href={reportHref({ tab, page: page - 1, filters })}>← Précédent</a>
+        ) : (
+          <span>← Précédent</span>
+        )}
       </Button>
       <span className="font-mono text-sm tracking-[0.02em] text-muted-foreground">
         Page {page} / {totalPages}
       </span>
       <Button asChild={hasNext} variant="outline" size="sm" disabled={!hasNext}>
-        {hasNext ? <a href={href(page + 1)}>Suivant →</a> : <span>Suivant →</span>}
+        {hasNext ? (
+          <a href={reportHref({ tab, page: page + 1, filters })}>Suivant →</a>
+        ) : (
+          <span>Suivant →</span>
+        )}
       </Button>
     </nav>
   );

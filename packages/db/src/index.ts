@@ -47,6 +47,7 @@ export {
   type RecentMatch,
   type ListRecentMatchesOptions,
   type ProfileMatch,
+  type ProfileMatchFilters,
   type ListProfileMatchesOptions,
   type ProfileMatchesPage,
   type ProfileMatchCounts
