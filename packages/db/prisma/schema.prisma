@@ -48,6 +48,11 @@ enum ApplicationArtifactStatus {
   validated
 }
 
+enum ApplicationLanguage {
+  fr
+  en
+}
+
 model UserProfile {
   id              String   @id @default(uuid()) @db.Uuid
   userId          String   @unique @map("user_id") @db.Uuid
@@ -210,6 +215,8 @@ model ApplicationArtifact {
   id            String                    @id @default(uuid()) @db.Uuid
   applicationId String                    @map("application_id") @db.Uuid
   kind          ApplicationArtifactKind
+  // Langue du document produit (versions FR/EN stockées indépendamment).
+  language      ApplicationLanguage       @default(fr)
   // Contenu texte recollé depuis ChatGPT (CV ciblé / lettre / message).
   contentText   String?                   @map("content_text")
   status        ApplicationArtifactStatus @default(draft)
@@ -219,7 +226,7 @@ model ApplicationArtifact {
 
   application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 
-  @@unique([applicationId, kind])
+  @@unique([applicationId, kind, language])
   @@index([applicationId])
   @@map("application_artifacts")
 }
