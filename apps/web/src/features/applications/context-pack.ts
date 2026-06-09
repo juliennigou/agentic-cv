@@ -226,31 +226,14 @@ function buildOfferSection(offer: ContextPackInput["offer"], copy: PackCopy): st
   return lines.join("\n");
 }
 
+// Section profil désactivée volontairement : le CV structuré (ci-dessous) couvre
+// déjà ces informations ; on évite de dupliquer et d'exposer des données de profil.
 function buildProfileSection(
-  profile: ContextPackInput["profile"],
-  includeContact: boolean,
-  copy: PackCopy
+  _profile: ContextPackInput["profile"],
+  _includeContact: boolean,
+  _copy: PackCopy
 ): string {
-  const c = copy.profile;
-  const lines = [c.title];
-  const name = [profile.firstName, profile.lastName].filter(Boolean).join(" ");
-  if (name) lines.push(c.name(name));
-  if (profile.location) lines.push(c.location(profile.location));
-  if (profile.targetRoles.length > 0) lines.push(c.targetRoles(profile.targetRoles.join(", ")));
-  if (profile.targetCountries.length > 0)
-    lines.push(c.targetCountries(profile.targetCountries.join(", ")));
-  if (profile.skills.length > 0) lines.push(c.skills(profile.skills.join(", ")));
-  if (profile.languages.length > 0) lines.push(c.languages(profile.languages.join(", ")));
-
-  if (includeContact) {
-    const contact = [
-      profile.firstName || profile.lastName ? c.fullName(name) : null,
-      profile.phone ? c.phone(profile.phone) : null
-    ].filter((line): line is string => line !== null);
-    if (contact.length > 0) lines.push("", c.contactTitle, ...contact);
-  }
-
-  return lines.length > 1 ? lines.join("\n") : c.empty;
+  return "";
 }
 
 function buildResumeSection(resumeData: unknown, copy: PackCopy): string {
