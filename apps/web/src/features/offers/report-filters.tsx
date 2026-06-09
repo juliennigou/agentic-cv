@@ -10,7 +10,7 @@ import {
   SelectValue
 } from "@/components/ui/select";
 
-import { SALARY_FILTER_STEPS } from "./match-report";
+import { SALARY_FILTER_STEPS } from "./match-report-constants";
 
 type ReportFiltersProps = {
   countries: Array<{ code: string; name: string }>;

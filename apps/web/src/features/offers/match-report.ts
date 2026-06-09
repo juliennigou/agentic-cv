@@ -8,11 +8,10 @@ import {
   type ProfileMatchFilters
 } from "@agentic-cv/db";
 
+import { SALARY_FILTER_STEPS } from "./match-report-constants";
+
 /** Nombre de matchs affichés par page. */
 export const MATCH_REPORT_PAGE_SIZE = 20;
-
-/** Tranches de revenu mensuel minimal (€) proposées en filtre rapide. */
-export const SALARY_FILTER_STEPS = [2000, 2500, 3000, 3500, 4000] as const;
 
 /** Onglets du rapport : nouveautés des 24 h vs. ensemble du catalogue. */
 export type ReportTab = "recent" | "all";
