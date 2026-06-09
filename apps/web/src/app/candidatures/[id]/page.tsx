@@ -21,13 +21,24 @@ export const dynamic = "force-dynamic";
 
 type ApplicationWorkspacePageProps = {
   params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 const idSchema = z.string().uuid();
 
+type ApplicationLanguage = "fr" | "en";
+
 const fieldLabelClass = "font-mono text-xs uppercase tracking-[0.06em] text-[var(--faint)]";
 
-export default async function ApplicationWorkspacePage({ params }: ApplicationWorkspacePageProps) {
+/** Langue active des documents, lue depuis `?lang=fr|en` (défaut `fr`). */
+function resolveLanguage(raw: string | string[] | undefined): ApplicationLanguage {
+  return raw === "en" ? "en" : "fr";
+}
+
+export default async function ApplicationWorkspacePage({
+  params,
+  searchParams
+}: ApplicationWorkspacePageProps) {
   const { id } = await params;
   const user = await getCurrentUser();
 
@@ -39,13 +50,16 @@ export default async function ApplicationWorkspacePage({ params }: ApplicationWo
     notFound();
   }
 
+  const language = resolveLanguage((await searchParams).lang);
+
   const workspace = await getApplicationWorkspace({ userId: user.id, applicationId: id });
   if (!workspace) {
     notFound();
   }
 
-  const { offer, artifacts } = workspace;
-  const pack = buildApplicationContextPack({ offer, profile: workspace.profile });
+  const { offer } = workspace;
+  const artifacts = workspace.artifacts[language];
+  const pack = buildApplicationContextPack({ offer, profile: workspace.profile, language });
   const location = formatLocation(offer.city, offer.country);
   const duration = formatDuration(offer.durationMonths);
   const validated = Boolean(workspace.validatedAt);
@@ -89,6 +103,7 @@ export default async function ApplicationWorkspacePage({ params }: ApplicationWo
                 n&apos;est incluse par défaut.
               </p>
             </div>
+            <LanguageToggle applicationId={workspace.id} language={language} />
             <ContextPackPanel pack={pack} />
           </section>
 
@@ -105,6 +120,7 @@ export default async function ApplicationWorkspacePage({ params }: ApplicationWo
 
             <form action={saveApplicationDraft} className="grid gap-6">
               <input type="hidden" name="applicationId" value={workspace.id} />
+              <input type="hidden" name="language" value={language} />
 
               <div className="grid gap-2">
                 <Label htmlFor="chatgptConversationUrl" className={fieldLabelClass}>
@@ -192,5 +208,48 @@ export default async function ApplicationWorkspacePage({ params }: ApplicationWo
         </aside>
       </div>
     </main>
+  );
+}
+
+const LANGUAGE_OPTIONS: ReadonlyArray<{ value: ApplicationLanguage; label: string }> = [
+  { value: "fr", label: "Français" },
+  { value: "en", label: "English" }
+];
+
+/**
+ * Bascule FR/EN des documents produits : deux liens qui re-rendent la page
+ * server-side avec le bon pack et les bons champs (l'UI reste en français).
+ */
+function LanguageToggle({
+  applicationId,
+  language
+}: {
+  applicationId: string;
+  language: ApplicationLanguage;
+}) {
+  return (
+    <div
+      role="group"
+      aria-label="Langue des documents"
+      className="inline-flex w-fit gap-1 rounded-sm border border-border bg-secondary p-1"
+    >
+      {LANGUAGE_OPTIONS.map((option) => {
+        const active = option.value === language;
+        return (
+          <a
+            key={option.value}
+            href={`/candidatures/${applicationId}?lang=${option.value}`}
+            aria-current={active ? "true" : undefined}
+            className={
+              active
+                ? "rounded-sm bg-[var(--accent)] px-3 py-1 font-mono text-xs tracking-[0.02em] text-[var(--on-accent)]"
+                : "rounded-sm px-3 py-1 font-mono text-xs tracking-[0.02em] text-muted-foreground transition-colors hover:text-foreground"
+            }
+          >
+            {option.label}
+          </a>
+        );
+      })}
+    </div>
   );
 }

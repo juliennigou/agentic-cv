@@ -51,6 +51,7 @@ export async function prepareApplication(formData: FormData): Promise<void> {
 export async function saveApplicationDraft(formData: FormData): Promise<void> {
   const parsed = applicationDraftSchema.parse({
     applicationId: formData.get("applicationId"),
+    language: formData.get("language") ?? "fr",
     chatgptConversationUrl: formData.get("chatgptConversationUrl") ?? "",
     targetedResume: formData.get("targetedResume") ?? "",
     coverLetter: formData.get("coverLetter") ?? "",
@@ -65,6 +66,7 @@ export async function saveApplicationDraft(formData: FormData): Promise<void> {
   await persistApplicationDraft({
     userId: user.id,
     applicationId: parsed.applicationId,
+    language: parsed.language,
     chatgptConversationUrl: parsed.chatgptConversationUrl || null,
     artifacts: toArtifactInputs(parsed)
   });
@@ -77,6 +79,7 @@ export async function saveApplicationDraft(formData: FormData): Promise<void> {
 export async function validateApplicationDraft(formData: FormData): Promise<void> {
   const parsed = applicationValidateSchema.parse({
     applicationId: formData.get("applicationId"),
+    language: formData.get("language") ?? "fr",
     chatgptConversationUrl: formData.get("chatgptConversationUrl") ?? "",
     targetedResume: formData.get("targetedResume") ?? "",
     coverLetter: formData.get("coverLetter") ?? "",
@@ -91,10 +94,15 @@ export async function validateApplicationDraft(formData: FormData): Promise<void
   await persistApplicationDraft({
     userId: user.id,
     applicationId: parsed.applicationId,
+    language: parsed.language,
     chatgptConversationUrl: parsed.chatgptConversationUrl || null,
     artifacts: toArtifactInputs(parsed)
   });
-  await validateApplicationWorkspace({ userId: user.id, applicationId: parsed.applicationId });
+  await validateApplicationWorkspace({
+    userId: user.id,
+    applicationId: parsed.applicationId,
+    language: parsed.language
+  });
 
   revalidatePath(`/candidatures/${parsed.applicationId}`);
   revalidatePath("/mes-vie");
