@@ -107,3 +107,80 @@ export async function listRecentMatchesForUser(
     LIMIT ${limit}
   `);
 }
+
+/** Match calculé à la volée contre l'ensemble des offres actives. */
+export type ProfileMatch = {
+  jobOfferId: string;
+  title: string;
+  companyName: string | null;
+  country: string | null;
+  city: string | null;
+  contractType: string | null;
+  durationMonths: number | null;
+  sourceUrl: string;
+  score: number;
+  /** Offre vue pour la première fois dans la fenêtre « nouvelles offres ». */
+  isNew: boolean;
+};
+
+export type ListProfileMatchesOptions = {
+  /** Pagination : nombre de matchs par page (défaut : 20). */
+  limit?: number;
+  /** Pagination : décalage (défaut : 0). */
+  offset?: number;
+};
+
+export type ProfileMatchesPage = {
+  items: ProfileMatch[];
+  /** Nombre total de matchs au-dessus du seuil (toutes pages confondues). */
+  total: number;
+};
+
+const DEFAULT_PROFILE_MATCH_LIMIT = 20;
+
+type ProfileMatchRow = ProfileMatch & { total: number };
+
+/**
+ * Classement personnalisé de **toutes** les offres actives (pas seulement les
+ * récentes) par similarité avec l'embedding du profil, paginé — les meilleures
+ * correspondances d'abord.
+ *
+ * Pas de seuil ici : les similarités de l'espace d'embedding sont resserrées,
+ * donc un cutoff est fragile ; le classement porte le signal et la pagination
+ * gère le volume. `count(*) OVER ()` renvoie le total (avant LIMIT/OFFSET).
+ * Renvoie une page vide si le profil n'a pas encore d'embedding.
+ */
+export async function listProfileMatches(
+  userId: string,
+  options: ListProfileMatchesOptions = {}
+): Promise<ProfileMatchesPage> {
+  const limit = options.limit ?? DEFAULT_PROFILE_MATCH_LIMIT;
+  const offset = options.offset ?? 0;
+
+  const rows = await prisma.$queryRaw<ProfileMatchRow[]>(Prisma.sql`
+    SELECT
+      o.id::text AS "jobOfferId",
+      o.title,
+      o.company_name AS "companyName",
+      o.country,
+      o.city,
+      o.contract_type AS "contractType",
+      o.duration_months AS "durationMonths",
+      o.source_url AS "sourceUrl",
+      (1 - (p.embedding <=> o.embedding))::float8 AS score,
+      (o.first_seen_at >= now() - make_interval(hours => ${num(NEW_OFFER_WINDOW_HOURS)})) AS "isNew",
+      (count(*) OVER ())::int AS total
+    FROM user_profiles p
+    JOIN job_offers o
+      ON o.is_active
+      AND o.embedding IS NOT NULL
+    WHERE p.user_id = ${userId}::uuid
+      AND p.embedding IS NOT NULL
+    ORDER BY score DESC, o.first_seen_at DESC
+    LIMIT ${num(limit)} OFFSET ${num(offset)}
+  `);
+
+  const total = rows[0]?.total ?? 0;
+  const items = rows.map(({ total: _total, ...match }) => match);
+  return { items, total };
+}

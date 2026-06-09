@@ -7,41 +7,52 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { prepareApplication } from "@/features/applications/actions";
 import { getCurrentUser } from "@/features/auth/current-user";
-import { getDailyReport, type DailyReportMatch } from "@/features/offers/daily-report";
-import { formatDate, formatDuration, formatLocation } from "@/features/offers/offer-view";
+import { getMatchReport, parseReportPage, type ReportMatch } from "@/features/offers/match-report";
+import { formatDuration, formatLocation } from "@/features/offers/offer-view";
 
 export const dynamic = "force-dynamic";
 
 const RETURN_TO = "/rapport";
 
-export default async function RapportPage() {
+type RapportPageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function RapportPage({ searchParams }: RapportPageProps) {
   const user = await getCurrentUser();
 
   if (!user) {
     redirect("/connexion?next=/rapport");
   }
 
-  const matches = await getDailyReport(user.id);
+  const requestedPage = parseReportPage((await searchParams).page);
+  const report = await getMatchReport(user.id, requestedPage);
+
+  // Page hors bornes (ex. lien obsolète) → on recale sur la dernière page.
+  if (report.total > 0 && requestedPage > report.totalPages) {
+    redirect(`/rapport?page=${report.totalPages}`);
+  }
 
   return (
     <main className="mx-auto w-full max-w-[1120px] px-5 pb-16 pt-8">
       <SiteHeader active="rapport" />
 
       <header className="grid gap-2 pb-5 pt-2">
-        <Eyebrow>Rapport quotidien</Eyebrow>
+        <Eyebrow>Mon rapport</Eyebrow>
         <h1 className="font-display text-2xl font-semibold tracking-[-0.01em]">
-          Nouvelles offres pertinentes
+          Offres qui te correspondent
         </h1>
         <span className="font-mono text-sm tracking-[0.02em] text-muted-foreground">
-          <strong className="text-foreground">{matches.length}</strong> offre
-          {matches.length > 1 ? "s" : ""} repérée{matches.length > 1 ? "s" : ""} sur les dernières
-          24 h, classée{matches.length > 1 ? "s" : ""} par pertinence avec ton profil.
+          <strong className="text-foreground">{report.total}</strong> offre
+          {report.total > 1 ? "s" : ""} active{report.total > 1 ? "s" : ""} classée
+          {report.total > 1 ? "s" : ""} par pertinence avec ton profil — les meilleures
+          correspondances d'abord. Les nouveautés des dernières 24 h sont signalées.
         </span>
       </header>
 
-      {matches.length === 0 ? (
+      {report.items.length === 0 ? (
         <div className="rounded-md border border-dashed border-[var(--border-strong)] bg-card p-6 leading-normal text-muted-foreground">
-          Aucune nouvelle offre pertinente pour l'instant. Complète ton{" "}
+          Aucune offre pertinente pour l'instant. Complète ton{" "}
           <a className="text-[var(--accent)] hover:underline" href="/compte">
             profil et ton CV
           </a>{" "}
@@ -49,23 +60,26 @@ export default async function RapportPage() {
           <a className="text-[var(--accent)] hover:underline" href="/offres">
             toutes les offres
           </a>
-          . Le rapport se met à jour chaque jour.
+          .
         </div>
       ) : (
-        <section className="grid gap-3">
-          {matches.map((match) => (
-            <MatchCard key={match.jobOfferId} match={match} />
-          ))}
-        </section>
+        <>
+          <section className="grid gap-3">
+            {report.items.map((match) => (
+              <MatchCard key={match.jobOfferId} match={match} />
+            ))}
+          </section>
+
+          <Pagination page={report.page} totalPages={report.totalPages} />
+        </>
       )}
     </main>
   );
 }
 
-function MatchCard({ match }: { match: DailyReportMatch }) {
+function MatchCard({ match }: { match: ReportMatch }) {
   const location = formatLocation(match.city, match.country);
   const duration = formatDuration(match.durationMonths);
-  const date = formatDate(match.createdAt);
 
   return (
     <Card className="flex flex-col gap-4 p-5 transition-colors hover:border-[var(--border-strong)]">
@@ -85,9 +99,16 @@ function MatchCard({ match }: { match: DailyReportMatch }) {
             </p>
           ) : null}
         </div>
-        <Badge variant="accent" title="Pertinence avec ton profil">
-          {match.scorePercent}% pertinent
-        </Badge>
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <Badge variant="accent" title="Pertinence avec ton profil">
+            {match.scorePercent}% pertinent
+          </Badge>
+          {match.isNew ? (
+            <span className="font-mono text-xs uppercase tracking-[0.06em] text-[var(--accent)]">
+              Nouveau
+            </span>
+          ) : null}
+        </div>
       </div>
 
       <div className="flex items-center justify-between gap-3">
@@ -96,14 +117,6 @@ function MatchCard({ match }: { match: DailyReportMatch }) {
           {location ? <Badge>{location}</Badge> : null}
           {duration ? <Badge>{duration}</Badge> : null}
         </div>
-        {date ? (
-          <span className="shrink-0 font-mono text-xs tracking-[0.02em] text-[var(--faint)]">
-            {date}
-          </span>
-        ) : null}
-      </div>
-
-      <div className="flex justify-end">
         <form action={prepareApplication}>
           <input type="hidden" name="jobOfferId" value={match.jobOfferId} />
           <input type="hidden" name="returnTo" value={RETURN_TO} />
@@ -113,5 +126,31 @@ function MatchCard({ match }: { match: DailyReportMatch }) {
         </form>
       </div>
     </Card>
+  );
+}
+
+function Pagination({ page, totalPages }: { page: number; totalPages: number }) {
+  if (totalPages <= 1) {
+    return null;
+  }
+
+  const hasPrev = page > 1;
+  const hasNext = page < totalPages;
+
+  return (
+    <nav
+      className="mt-6 flex items-center justify-between gap-3"
+      aria-label="Pagination du rapport"
+    >
+      <Button asChild={hasPrev} variant="outline" size="sm" disabled={!hasPrev}>
+        {hasPrev ? <a href={`/rapport?page=${page - 1}`}>← Précédent</a> : <span>← Précédent</span>}
+      </Button>
+      <span className="font-mono text-sm tracking-[0.02em] text-muted-foreground">
+        Page {page} / {totalPages}
+      </span>
+      <Button asChild={hasNext} variant="outline" size="sm" disabled={!hasNext}>
+        {hasNext ? <a href={`/rapport?page=${page + 1}`}>Suivant →</a> : <span>Suivant →</span>}
+      </Button>
+    </nav>
   );
 }
