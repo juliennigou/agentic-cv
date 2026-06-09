@@ -27,6 +27,10 @@ const options: JobOfferPipelineOptions = {
     batchSize: numberArg("embed-batch-size"),
     maxOffers: numberArg("embed-max-offers")
   },
+  match: {
+    batchSize: numberArg("match-batch-size"),
+    maxProfiles: numberArg("match-max-profiles")
+  },
   log: (message) => console.error(`${new Date().toISOString()} ${message}`)
 };
 

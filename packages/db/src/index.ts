@@ -35,6 +35,17 @@ export {
   type SaveResumeInput
 } from "./repositories/user-profile-repository";
 export {
+  listProfilesNeedingEmbedding,
+  setProfileEmbedding,
+  type ProfileNeedingEmbedding
+} from "./repositories/user-profile-embedding-repository";
+export {
+  upsertJobOfferMatches,
+  listRecentMatchesForUser,
+  type RecentMatch,
+  type ListRecentMatchesOptions
+} from "./repositories/job-offer-match-repository";
+export {
   createUserDocument,
   listUserDocuments,
   getLatestBaseResume,
