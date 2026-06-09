@@ -1,0 +1,24 @@
+# Job pipeline quotidien, découplé de LiteLLM. Lancé en one-shot par le cron :
+#
+#   docker compose run --rm pipeline
+#
+# Rejoint le réseau externe `llm-net` et appelle LiteLLM en interne
+# (http://litellm:4000/v1). Le profil `job` évite qu'un `up` ne le démarre.
+services:
+  pipeline:
+    build:
+      context: ../..
+      dockerfile: deploy/pipeline/Dockerfile
+    image: agentic-cv-pipeline:latest
+    container_name: agentic-cv-pipeline
+    profiles: ["job"]
+    env_file: .env
+    environment:
+      # LiteLLM joint en interne via le réseau Docker partagé.
+      LITELLM_BASE_URL: http://litellm:4000/v1
+    networks:
+      - llm-net
+
+networks:
+  llm-net:
+    external: true
